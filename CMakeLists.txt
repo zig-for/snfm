@@ -13,6 +13,7 @@ include(../vcpkg/scripts/buildsystems/vcpkg.cmake)
 find_package(Protobuf CONFIG REQUIRED)
 find_package(gRPC CONFIG REQUIRED)
 
+set(CMAKE_CXX_STANDARD 20)
 find_program(GRPC_CPP_PLUGIN grpc_cpp_plugin) # Get full path to plugin
 
 function(PROTOBUF_GENERATE_GRPC_CPP SRCS HDRS)
@@ -72,11 +73,11 @@ function(PROTOBUF_GENERATE_GRPC_CPP SRCS HDRS)
 endfunction()
 
 
+protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS sni/protos/sni/sni.proto)
+PROTOBUF_GENERATE_GRPC_CPP(PROTO_GRPC_SRCS PROTO_GRPC_HDRS sni/protos/sni/sni.proto)
 
-PROTOBUF_GENERATE_GRPC_CPP(PROTO_SRCS PROTO_HDRS sni/protos/sni/sni.proto)
 
-
-add_executable(snfm src/snfm.cpp ${PROTO_SRCS} ${PROTO_HDRS})
+add_executable(snfm src/snfm.cpp ${PROTO_SRCS} ${PROTO_HDRS} ${PROTO_GRPC_SRCS} ${PROTO_GRPC_HDRS})
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR})
 
 target_link_libraries(snfm PRIVATE protobuf::libprotoc protobuf::libprotobuf protobuf::libprotobuf-lite  gRPC::grpc++_unsecure)
