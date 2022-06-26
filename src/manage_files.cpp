@@ -4,14 +4,24 @@
     #include <wx/wx.h>
 #endif
 #include <wx/treectrl.h>
-
+#include <wx/dnd.h>
 #include <wx/artprov.h>
 #include "snes.xpm"
 
+#define PROTECT_SYSTEM_FOLDERS(fileId) if (GetRootItem() == fileId || GetItemText(fileId) == "/" || (GetItemText(fileId) == "sd2snes" && GetItemParent(fileId) == GetRootItem())){ return false; }
 
-class SNFileTree : public wxTreeCtrl
+class SNFileTree : public wxTreeCtrl, wxFileDropTarget
 {
     wxDECLARE_DYNAMIC_CLASS(SNFileTree);
+
+    enum SNIMenuItem
+    {
+        SNIMenuItem_Run,
+        SNIMenuItem_Refresh,
+        SNIMenuItem_Rename,
+        SNIMenuItem_CreateDirectory,
+        SNIMenuItem_Delete,
+    };
 
     enum SNIcon
     {
@@ -25,36 +35,99 @@ public:
     SNFileTree(wxWindow* parent, const std::string& uri, SNIConnection* sni)
         : uri_(uri), sni_(sni),
         wxTreeCtrl(parent, wxID_ANY,
-            wxDefaultPosition, wxSize(500, 500), wxTR_NO_BUTTONS | wxTR_HIDE_ROOT | wxTR_EDIT_LABELS | wxTR_MULTIPLE)
+            wxDefaultPosition, wxSize(500, 500), wxTR_HAS_BUTTONS | wxTR_TWIST_BUTTONS | wxTR_EDIT_LABELS | wxTR_MULTIPLE)
     {
         Bind(wxEVT_COMMAND_TREE_ITEM_EXPANDING, &SNFileTree::OnExpanding, this);
         Bind(wxEVT_TREE_ITEM_ACTIVATED, &SNFileTree::OnActivate, this);
         Bind(wxEVT_TREE_KEY_DOWN, &SNFileTree::OnKeyDown, this);
+        Bind(wxEVT_TREE_ITEM_MENU, &SNFileTree::OnRightClick, this);
+        Bind(wxEVT_TREE_BEGIN_DRAG, &SNFileTree::OnTreeDragBegin, this);
+        Bind(wxEVT_TREE_END_DRAG, &SNFileTree::OnTreeDragEnd, this);
+        Bind(wxEVT_TREE_END_LABEL_EDIT, &SNFileTree::OnLabelEdit, this);
+
+        dir_menu_ = new wxMenu();
+        dir_menu_->Append(SNIMenuItem_Run, "Run");
+        dir_menu_->Append(SNIMenuItem_Rename, "Rename");
+        dir_menu_->Append(SNIMenuItem_Refresh, "Refresh");
+        dir_menu_->Append(SNIMenuItem_CreateDirectory, "Create Directory");
+        //dir_menu_->Append(SNIMenuItem_CreateDirectory, "Import file");
+        //dir_menu_->Append(SNIMenuItem_CreateDirectory, "Export file");
+        
+        Bind(wxEVT_COMMAND_MENU_SELECTED, &SNFileTree::OnContextMenuSelected, this);
+
+        parent->SetDropTarget(this);
     }
 
-
-    std::filesystem::path constructPath(wxTreeCtrl* tree, wxTreeItemId folder)
+    void setUri(const std::string& uri)
     {
-        wxTreeItemId parent = tree->GetItemParent(folder);
+        uri_ = uri;
+        DeleteAllItems();
+        
+        wxTreeItemId rootId = AddRoot("/");
+
+        SetItemImage(rootId, 0);
+        SetItemImage(rootId, 1, wxTreeItemIcon_Expanded);
+
+        if (!uri_.empty())
+        {
+            refreshFolder(rootId);
+        }
+
+        Expand(rootId);
+    }
+
+    std::filesystem::path constructPath(wxTreeItemId folder)
+    {
+        wxTreeItemId parent = GetItemParent(folder);
 
         if (!parent.IsOk())
         {
-            return "/";
+            return std::filesystem::path("/", std::filesystem::path::generic_format);
         }
-        return constructPath(tree, parent) / tree->GetItemText(folder).ToStdString();
+        return constructPath(parent) / GetItemText(folder).ToStdString();
+    }
+
+    bool isPlaceHolder(wxTreeItemId id)
+    {
+        return GetItemText(id) == "..." || GetItemText(id) == "(empty)";
     }
 
     void refreshFolder(wxTreeItemId folderId)
-    {
-        DeleteChildren(folderId);
+    {        
+        wxTreeItemId parentId = GetItemParent(folderId);
+        if (parentId.IsOk() && !HasChildren(folderId))
+        {
+            return refreshFolder(parentId);
+        }
+        wxTreeItemIdValue cookie;
+        wxTreeItemId childId = GetFirstChild(folderId, cookie);
+        if(childId.IsOk() && isPlaceHolder(childId))
+        {        
+            DeleteChildren(folderId);
+        }
 
-        std::string full_path = constructPath(this, folderId).generic_string();
-
+        std::unordered_map<wxString, wxTreeItemId> nodes;
+        while (childId.IsOk())
+        {
+            nodes[GetItemText(childId)] = childId;
+            childId = GetNextChild(folderId, cookie);
+        }
+        std::string full_path = constructPath(folderId).generic_string();
+        
         ReadDirectoryResponse response = sni_->readDirectory(uri_, full_path);
         for (const DirEntry& entry : response.entries())
         {
             if (entry.name() == "." || entry.name() == "..")
             {
+                continue;
+            }
+
+            // Don't add nodes that already exist
+            // technically this won't catch the edge case of a file type changing, I don't really care
+            auto it = nodes.find(entry.name());
+            if (it != nodes.end())
+            {
+                nodes.erase(it);
                 continue;
             }
             
@@ -75,46 +148,75 @@ public:
                 {
                     SetItemImage(nodeId, SNIcon_FILE_UNKNOWN);
                 }
-
             }
         }
+        for (const auto& p : nodes)
+        {
+            Delete(p.second);
+        }
         SortChildren(folderId);
+        fixupEmptyFolder(folderId);
     }
 
+    // TODO: make sure this is sfc/smc
     void requestBoot(wxTreeItemId fileId)
     {         
+        if (isPlaceHolder(fileId))
+        {
+            return;
+        }
         if (HasChildren(fileId))
         {
             return;
         }
-        std::string full_path = constructPath(this, fileId).generic_string();
+        std::string full_path = constructPath(fileId).generic_string();
         sni_->bootFile(uri_, full_path);
     }
 
-    void requestDelete(wxTreeItemId fileId)
+    bool requestDelete(wxTreeItemId fileId, bool top = true)
     {
-        std::string full_path = constructPath(this, fileId).generic_string();
+        if (isPlaceHolder(fileId))
+        {
+            return false;
+        }
+        std::string full_path = constructPath(fileId).generic_string();
+
+        // S A F E T Y
+        PROTECT_SYSTEM_FOLDERS(fileId);
 
         if (HasChildren(fileId))
         {
             refreshFolder(fileId);
             
-//            wxTreeItemId child = this->GetFirstChild(fileId);
             wxTreeItemIdValue cookie;
             wxTreeItemId childId = GetFirstChild(fileId, cookie);
             while(childId.IsOk())
             {
-                requestDelete(childId);
+                requestDelete(childId, false);
                 childId = GetNextChild(fileId, cookie);
             }
         }
         
         if (sni_->deleteFile(uri_, full_path))
         {
-            Delete(fileId);
+            if (top)
+            {
+                wxTreeItemId parentId = GetItemParent(fileId);
+                Delete(fileId);
+                fixupEmptyFolder(parentId);
+            }
+            return true;
         }
-        
-        
+        return false;
+    }
+
+    // todo: we should handle this via the delete event
+    void fixupEmptyFolder(wxTreeItemId folderId)
+    {
+        if (!ItemHasChildren(folderId))
+        {
+            AppendItem(folderId, "(empty)");
+        }
     }
 
     void requestDeleteOfSelection()
@@ -125,6 +227,97 @@ public:
         {
             requestDelete(item);
         }
+    }
+
+    wxTreeItemId showNameUnder(wxTreeItemId folder, const std::string name)
+    {
+        wxTreeItemIdValue cookie;
+        wxTreeItemId childId = GetFirstChild(folder, cookie);
+        while (childId.IsOk())
+        {
+            if (GetItemText(childId) == name)
+            {
+                EnsureVisible(childId);
+                break;
+            }
+            childId = GetNextChild(folder, cookie);
+        }
+        return childId;
+    }
+
+    void createDirectory(wxTreeItemId fileId, std::string directory_name)
+    {
+        // If we make a dir on a file, make it a sibling
+        if (!HasChildren(fileId))
+        {
+            return createDirectory(GetItemParent(fileId), directory_name);
+        }
+        std::filesystem::path path = constructPath(fileId) / directory_name;
+        sni_->makeDirectory(uri_, path.generic_string());
+        
+        refreshFolder(fileId);
+        wxTreeItemId childId = showNameUnder(fileId, directory_name);
+        if (childId.IsOk())
+        {
+            UnselectAll();
+            SelectItem(childId);
+        }
+    }
+
+    wxTreeItemId parentDirIfNotDir(wxTreeItemId id)
+    {
+        if (!ItemHasChildren(id))
+        {
+            return GetItemParent(id);
+        }
+        return id;
+    }
+
+    bool moveToFolder(wxTreeItemId from, wxTreeItemId to)
+    {
+        PROTECT_SYSTEM_FOLDERS(from);
+        to = parentDirIfNotDir(to);
+        if (!to.IsOk())
+        {
+            // this happens if you move stuff around enough? something is out of sync
+            return false;
+        }
+        std::string file_name = GetItemText(from).ToStdString();
+        std::filesystem::path to_path = constructPath(to) / file_name;
+
+        if (sni_->renameFile(uri_, constructPath(from), to_path))
+        {
+            wxTreeItemId from_parent = GetItemParent(from);
+            Delete(from);
+            fixupEmptyFolder(from_parent);
+            refreshFolder(to);
+            wxTreeItemId childId = showNameUnder(to, file_name);
+            SelectItem(childId);
+            return true;
+        }
+        return false;
+    }
+
+    bool rename(wxTreeItemId file, const std::string& name)
+    {
+        PROTECT_SYSTEM_FOLDERS(file);
+
+        if (GetItemText(file) == name)
+        {
+            return false;
+        }
+
+        wxTreeItemId parent = GetItemParent(file);
+        
+        std::filesystem::path from_path = constructPath(file);
+        std::filesystem::path to_path = constructPath(parent) / name;
+
+        bool ok = sni_->renameFile(uri_, from_path, to_path);
+        if (ok)
+        {
+            SortChildren(parent);
+        }
+        return ok;
     }
 private:
     virtual int OnCompareItems(const wxTreeItemId& a,
@@ -149,6 +342,52 @@ private:
 
         return wxTreeCtrl::OnCompareItems(a, b);
     }
+    void OnRightClick(wxTreeEvent& event)
+    {
+        if (HasChildren(event.GetItem()))
+        {
+            PopupMenu(dir_menu_);
+        }
+        else
+        {
+            PopupMenu(dir_menu_);
+        }
+    }
+    void OnTreeDragBegin(wxTreeEvent& event)
+    {
+        event.Allow();
+        
+        GetSelections(start_drag_items_);
+    }
+
+    bool isAncestor(wxTreeItemId maybeAncestor, wxTreeItemId check)
+    {
+        while (check.IsOk())
+        {
+            if (check == maybeAncestor)
+            {
+                return true;
+            }
+            check = GetItemParent(check);
+        }
+        return false;
+    }
+
+    void OnTreeDragEnd(wxTreeEvent& event)
+    {
+        UnselectAll();
+        wxTreeItemId to = event.GetItem();
+        for(wxTreeItemId from : start_drag_items_)
+        {
+            if (from.IsOk())
+            {
+                if (!isAncestor(from, to))
+                {
+                    moveToFolder(from, to);
+                }
+            }
+        }
+    }
 
     void OnExpanding(wxTreeEvent& event)
     {
@@ -167,6 +406,39 @@ private:
             requestBoot(item);
         }
     }
+    void OnContextMenuSelected(wxCommandEvent& event)
+    {
+        switch (event.GetId())
+        {
+        case SNIMenuItem_Run:
+            requestBoot(GetFocusedItem());
+            break;
+        case SNIMenuItem_Rename:
+            EditLabel(GetFocusedItem());
+        case SNIMenuItem_Refresh:
+            refreshFolder(GetFocusedItem());
+            break;
+        case SNIMenuItem_CreateDirectory:
+        {
+            wxString text = wxGetTextFromUser("Directory name?");
+            if (!text.empty())
+            {
+                if (text.Contains("/"))
+                {
+                    wxLogError("Invalid directory name.");
+                }
+                else
+                {
+                    createDirectory(GetFocusedItem(), text.ToStdString());
+                }
+            }
+        }
+            break;
+        case SNIMenuItem_Delete:
+            requestDeleteOfSelection();
+            break;
+        }        
+    }
 
     void OnKeyDown(wxTreeEvent& event)
     {
@@ -180,13 +452,52 @@ private:
         }
     }
 
-    void OnDelete(wxTreeEvent& event)
+    void OnLabelEdit(wxTreeEvent& event)
     {
-        //requestDelete(event.GetItem());
+        if (event.IsEditCancelled())
+        {
+            return;
+        }
+        if (!rename(event.GetItem(), event.GetLabel().ToStdString()))
+        {
+            event.Veto();
+        }
     }
+
+    virtual bool OnDropFiles(wxCoord 	x,
+        wxCoord 	y, 
+        const wxArrayString& filenames
+    ) override
+    {
+        int mask = wxTREE_HITTEST_ONITEMBUTTON | wxTREE_HITTEST_ONITEMICON | wxTREE_HITTEST_ONITEMLABEL | wxTREE_HITTEST_ONITEMRIGHT;
+        int flags = 0;
+        wxPoint point{ x,y };
+        point -= GetPosition();
+        wxTreeItemId hit = HitTest(point, flags);
+
+        if ((flags & mask) && hit.IsOk())
+        {
+            hit = parentDirIfNotDir(hit);
+            std::filesystem::path device_path = constructPath(hit);
+
+            for (const wxString& file : filenames)
+            {
+                sni_->putFile(uri_, file.ToStdString(), device_path);
+            }
+
+            refreshFolder(hit);
+            return true;
+        }
+
+        return false;
+    }
+
     SNIConnection* sni_ = nullptr;
     std::string uri_;
+    wxMenu* dir_menu_;
 
+    //wxTreeItemId start_drag_item_;
+    wxArrayTreeItemIds start_drag_items_;
 };
 wxIMPLEMENT_DYNAMIC_CLASS(SNFileTree, wxTreeCtrl);
 
@@ -201,10 +512,12 @@ class MyFrame : public wxFrame
 public:
     MyFrame(const wxString& title, const wxPoint& pos, const wxSize& size);
 private:
-    void OnHello(wxCommandEvent& event);
+    
     void OnExit(wxCommandEvent& event);
     void OnAbout(wxCommandEvent& event);
     wxDECLARE_EVENT_TABLE();
+
+    void OnDeviceSelect(wxCommandEvent& event);
 
 
     SNIConnection sni;
@@ -219,11 +532,12 @@ enum
     ID_Hello = 1
 };
 wxBEGIN_EVENT_TABLE(MyFrame, wxFrame)
-EVT_MENU(ID_Hello, MyFrame::OnHello)
+
 EVT_MENU(wxID_EXIT, MyFrame::OnExit)
 EVT_MENU(wxID_ABOUT, MyFrame::OnAbout)
 wxEND_EVENT_TABLE()
 wxIMPLEMENT_APP(MyApp);
+
 bool MyApp::OnInit()
 {
     wxInitAllImageHandlers();
@@ -237,12 +551,10 @@ bool MyApp::OnInit()
 MyFrame::MyFrame(const wxString& title, const wxPoint& pos, const wxSize& size)
     : wxFrame(NULL, wxID_ANY, title, pos, size)
 {
-
-
     wxMenu* menuFile = new wxMenu;
-    menuFile->Append(ID_Hello, "&Hello...\tCtrl-H",
-        "Help string shown in status bar for this menu item");
-    menuFile->AppendSeparator();
+    //menuFile->Append(ID_Hello, "&Hello...\tCtrl-H",
+    //    "Help string shown in status bar for this menu item");
+    //menuFile->AppendSeparator();
     menuFile->Append(wxID_EXIT);
     wxMenu* menuHelp = new wxMenu;
     menuHelp->Append(wxID_ABOUT);
@@ -272,8 +584,8 @@ MyFrame::MyFrame(const wxString& title, const wxPoint& pos, const wxSize& size)
     wxButton* button = new wxButton(this, wxID_ANY, L"🗘", wxDefaultPosition, wxSize(25, 25));
 
     uris_ = sni.getDeviceUris();
-    //wxArrayString choices(1, { "fxpakpro://./COM4" });
-    wxArrayString choices;// (uris.front(), uris.back());
+    
+    wxArrayString choices;
     for (std::string uri : uris_)
     {
         choices.push_back(uri);
@@ -284,10 +596,9 @@ MyFrame::MyFrame(const wxString& title, const wxPoint& pos, const wxSize& size)
         devicesDropdown->Select(0);
         current_uri_ = choices[0];
     }
-    //devicesDropdown->AppendString();
-    //devicesDropdown->SetHint("fxpakpro://./COM4");
+    
     refreshBox->Add(devicesDropdown, 1, wxEXPAND);
-    //refreshBox->SetSizeHints(this);
+
     refreshBox->Add(button);
 
     treeCtrl_ = new SNFileTree(this, current_uri_, &sni);
@@ -308,22 +619,19 @@ MyFrame::MyFrame(const wxString& title, const wxPoint& pos, const wxSize& size)
     icons->Add(snes_icon);
     treeCtrl_->SetImageList(icons);
 
-    wxTreeItemId rootId = treeCtrl_->AddRoot("/");
-
-    treeCtrl_->SetItemImage(rootId, 0);
-    treeCtrl_->SetItemImage(rootId, 1, wxTreeItemIcon_Expanded);
-
-
-    if (!current_uri_.empty())
-    {    
-        treeCtrl_->refreshFolder(rootId);
-    }
- 
+    
+    treeCtrl_->setUri(current_uri_);
+    
     bigBox->Layout();
     SetSizer(bigBox);
-   
+
+    Bind(wxEVT_CHOICE, &MyFrame::OnDeviceSelect, this);
 }
 
+void MyFrame::OnDeviceSelect(wxCommandEvent& event)
+{
+    treeCtrl_->setUri(uris_[event.GetSelection()]);
+}
 
 void MyFrame::OnExit(wxCommandEvent& event)
 {
@@ -331,37 +639,6 @@ void MyFrame::OnExit(wxCommandEvent& event)
 }
 void MyFrame::OnAbout(wxCommandEvent& event)
 {
-    wxMessageBox("This is a wxWidgets' Hello world sample",
-        "About Hello World", wxOK | wxICON_INFORMATION);
+    wxMessageBox("It's a file manager for your SNES. There's drag and drop. Double click to run. Have fun.",
+        "About SNFM", wxOK | wxICON_INFORMATION);
 }
-void MyFrame::OnHello(wxCommandEvent& event)
-{
-    //wxLogMessage("Hello world from wxWidgets!");
-}
-#if 0
-int main(int argc, char* argv[])
-{
-    MyApp app;
-        
-    /*
-    SNIConnection sni;
-
-    auto device_filter =
-        [](const DevicesResponse::Device& device) -> bool
-    {
-        auto caps = device.capabilities();
-        return std::find(caps.begin(), caps.end(), DeviceCapability::MakeDirectory) != caps.end() &&
-            std::find(caps.begin(), caps.end(), DeviceCapability::PutFile) != caps.end() &&
-            std::find(caps.begin(), caps.end(), DeviceCapability::BootFile) != caps.end();
-    };
-    std::cout << "refreshing devices" << std::endl;
-    sni.refreshDevices(device_filter);
-    auto uri = sni.getFirstDeviceUri();
-    if (!uri)
-    {
-        std::cout << "no uri" << std::endl;
-        return 1;
-    }*/
-    return 0;
-}
-#endif

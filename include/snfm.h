@@ -143,6 +143,24 @@ public:
         return status.ok();
     }
     
+    bool renameFile(const std::string& uri, const std::filesystem::path& from, const std::filesystem::path& to)
+    {
+        RenameFileRequest request;
+        request.set_uri(uri);
+        request.set_path(from.generic_string());
+
+        assert(to.has_root_directory());
+        assert(from.has_root_directory());
+        assert(from.parent_path() != from);
+        std::filesystem::path a(from.parent_path());
+        std::filesystem::path b(from.filename());
+        std::filesystem::path c(to.lexically_relative(a));
+        request.set_newfilename(to.lexically_relative(from.parent_path()).generic_string());
+        RenameFileResponse response;
+        grpc::ClientContext context;
+        grpc::Status status = filesystem_stub_->RenameFile(&context, request, &response);
+        return status.ok();
+    }
 
 private:
     std::shared_ptr<grpc::Channel> channel_;
