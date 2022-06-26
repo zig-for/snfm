@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.24)
+cmake_minimum_required(VERSION 3.22)
 
 project(snfm)
 # vcpkg install protobuf protobuf:x64-windows grpc
@@ -70,15 +70,31 @@ function(PROTOBUF_GENERATE_GRPC_CPP SRCS HDRS)
   set_source_files_properties(${${SRCS}} ${${HDRS}} PROPERTIES GENERATED TRUE)
   set(${SRCS} ${${SRCS}} PARENT_SCOPE)
   set(${HDRS} ${${HDRS}} PARENT_SCOPE)
-endfunction()
 
+endfunction()
 
 protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS sni/protos/sni/sni.proto)
 PROTOBUF_GENERATE_GRPC_CPP(PROTO_GRPC_SRCS PROTO_GRPC_HDRS sni/protos/sni/sni.proto)
 
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR} include %)
 
-add_executable(snfm src/snfm.cpp ${PROTO_SRCS} ${PROTO_HDRS} ${PROTO_GRPC_SRCS} ${PROTO_GRPC_HDRS})
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR})
+add_library(snfm_common ${PROTO_SRCS} ${PROTO_HDRS} ${PROTO_GRPC_SRCS} ${PROTO_GRPC_HDRS})
+target_link_libraries(snfm_common protobuf::libprotoc protobuf::libprotobuf protobuf::libprotobuf-lite gRPC::grpc++_unsecure)
 
-target_link_libraries(snfm PRIVATE protobuf::libprotoc protobuf::libprotobuf protobuf::libprotobuf-lite  gRPC::grpc++_unsecure)
-#target_link_libraries(snfm ${Protobuf_LIBRARIES})
+add_executable(send_file "src/send_file.cpp")
+target_link_libraries(send_file PRIVATE snfm_common)
+
+add_executable(manage_files "src/manage_files.cpp")
+target_link_libraries(manage_files PRIVATE snfm_common)
+    find_package(wxWidgets REQUIRED)
+    target_compile_definitions(manage_files PRIVATE ${wxWidgets_DEFINITIONS} "$<$<CONFIG:DEBUG>:${wxWidgets_DEFINITIONS_DEBUG}>" )
+    target_include_directories(manage_files PRIVATE ${wxWidgets_INCLUDE_DIRS})
+    target_link_libraries(manage_files PRIVATE ${wxWidgets_LIBRARIES})         
+
+
+    set_target_properties(manage_files PROPERTIES WIN32_EXECUTABLE TRUE)
+
+
+
+    add_compile_options("$<$<C_COMPILER_ID:MSVC>:/utf-8>")
+add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
