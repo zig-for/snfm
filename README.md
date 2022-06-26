@@ -3,7 +3,7 @@
 ## Windows instructions
 
 ### First
-`vcpkg install protobuf protobuf:x64-windows grpc`
+`vcpkg install protobuf protobuf:x64-windows grpc wxwidgets`
 `cmake -B build -S . "-DCMAKE_TOOLCHAIN_FILE=<YOUR_VCPKG_INSTALL_FOLDER>/scripts/buildsystems/vcpkg.cmake"`
 
 ### Then
@@ -11,4 +11,4 @@
 
 ## Linux/MacOS instructions
 
-Probably the same thing, but without having to mess with vcpkg.
+The same, but install the dependencies through git/apt. Good luck.

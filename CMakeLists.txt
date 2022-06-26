@@ -9,8 +9,9 @@ project(snfm)
 # "-DCMAKE_TOOLCHAIN_FILE=D:/dev/vcpkg/scripts/buildsystems/vcpkg.cmake"
 # tested on VS 2022 toolchain and newest cmake :)
 
-include(../vcpkg/scripts/buildsystems/vcpkg.cmake)
-find_package(Protobuf CONFIG REQUIRED)
+# include(../vcpkg/scripts/buildsystems/vcpkg.cmake)
+include(FindProtobuf)
+find_package(Protobuf REQUIRED)
 find_package(gRPC CONFIG REQUIRED)
 
 set(CMAKE_CXX_STANDARD 20)

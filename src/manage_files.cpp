@@ -30,8 +30,30 @@ class SNFileTree : public wxTreeCtrl, wxFileDropTarget
         SNIcon_FILE_UNKNOWN,
         SNIcon_FILE_SNES,
     };
+
+    // wxWindow::SetDropTarget() takes sole ownership, so we need to forward the call
+    struct DropTargetThunk : wxFileDropTarget
+    {
+        DropTargetThunk(wxFileDropTarget* thunk)
+         :   thunk(thunk)
+        {
+            
+        }
+
+        virtual bool OnDropFiles(wxCoord 	x,
+            wxCoord 	y,
+            const wxArrayString& filenames
+        ) override
+        {
+            return thunk->OnDropFiles(x, y, filenames);
+        }
+
+        wxFileDropTarget* thunk;
+    };
 public:
-    SNFileTree() : wxTreeCtrl() {}
+
+
+        SNFileTree() : wxTreeCtrl() {}
     SNFileTree(wxWindow* parent, const std::string& uri, SNIConnection* sni)
         : uri_(uri), sni_(sni),
         wxTreeCtrl(parent, wxID_ANY,
@@ -55,9 +77,14 @@ public:
         
         Bind(wxEVT_COMMAND_MENU_SELECTED, &SNFileTree::OnContextMenuSelected, this);
 
-        parent->SetDropTarget(this);
-    }
 
+
+        parent->SetDropTarget(new DropTargetThunk(this));
+    }
+    ~SNFileTree()
+    {
+        //GetParent()->SetDropTarget(nullptr);
+    }
     void setUri(const std::string& uri)
     {
         uri_ = uri;
@@ -99,14 +126,19 @@ public:
         {
             return refreshFolder(parentId);
         }
+
+        std::unordered_map<wxString, wxTreeItemId> nodes;
+
+
         wxTreeItemIdValue cookie;
         wxTreeItemId childId = GetFirstChild(folderId, cookie);
         if(childId.IsOk() && isPlaceHolder(childId))
-        {        
+        {       
             DeleteChildren(folderId);
+            childId.Unset();
         }
-
-        std::unordered_map<wxString, wxTreeItemId> nodes;
+        
+        
         while (childId.IsOk())
         {
             nodes[GetItemText(childId)] = childId;
@@ -333,8 +365,13 @@ private:
         {
             return 1;
         }
-
-        int c = strcmpi(GetItemText(a).c_str(), GetItemText(b).c_str());
+        int c =
+#ifdef WIN32
+        strcmpi
+        #else
+        strcasecmp
+#endif
+            (GetItemText(a).c_str(), GetItemText(b).c_str());
         if (c)
         {
             return c;
