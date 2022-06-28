@@ -1,4 +1,4 @@
 .vscode
-build/
+.vs
+build*/
 out/
-build-wsl/
