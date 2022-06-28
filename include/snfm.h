@@ -12,7 +12,8 @@
 class SNIConnection
 {
 public:
-    SNIConnection(const std::string& address = "localhost:8191")
+    // this needs to be passed in
+    SNIConnection(const std::string& address = "localhost:8191") // "172.27.16.1:8191"
         : channel_{ grpc::CreateChannel(address, grpc::InsecureChannelCredentials()) }, devices_stub_{ Devices::NewStub(channel_) }, filesystem_stub_{ DeviceFilesystem::NewStub(channel_) }
     {
     }
@@ -113,8 +114,12 @@ public:
         std::cout << request.uri() << " put file of size " << request.data().size() << " at " << device_path.generic_string() << std::endl;
         PutFileResponse response;
         grpc::ClientContext context;
-        filesystem_stub_->PutFile(&context, request, &response);
-        std::cout << response.DebugString() << std::endl;
+        auto status = filesystem_stub_->PutFile(&context, request, &response);
+        
+        if (!status.ok())
+        {
+            std::cerr << status.error_message();
+        }
         if (response.path().empty())
         {
             std::cout << "no response path" << std::endl;
