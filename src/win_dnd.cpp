@@ -10,7 +10,12 @@ SCODE SNWinDropFeedback::QueryContinueDrag(
     BOOL bEscapePressed,
     DWORD dwKeyState)
 {
-    return tree->IsMouseInWindow() ? DRAGDROP_S_CANCEL : COleDropSource::QueryContinueDrag(bEscapePressed, dwKeyState);
+    if (tree->IsMouseInWindow())
+    {
+        returned_to_window_ = true;
+        return DRAGDROP_S_CANCEL;
+    }
+    return COleDropSource::QueryContinueDrag(bEscapePressed, dwKeyState);
 }
 
 

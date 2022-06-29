@@ -9,13 +9,22 @@
 #include <fstream>
 
 
+static grpc::ChannelArguments GetChannelArgs()
+{
+    grpc::ChannelArguments ca;
+    ca.SetMaxReceiveMessageSize(-1);
+    return ca;
+}
+
 class SNIConnection
 {
 public:
     // this needs to be passed in
-    SNIConnection(const std::string& address = "localhost:8191") // "172.27.16.1:8191"
-        : channel_{ grpc::CreateChannel(address, grpc::InsecureChannelCredentials()) }, devices_stub_{ Devices::NewStub(channel_) }, filesystem_stub_{ DeviceFilesystem::NewStub(channel_) }
+    //SNIConnection(const std::string& address = "localhost:8191") // "172.27.16.1:8191"
+    SNIConnection(const std::string& address = "172.27.16.1:8191") // "172.27.16.1:8191"
+        : channel_{ grpc::CreateCustomChannel(address, grpc::InsecureChannelCredentials(), GetChannelArgs()) }, devices_stub_{ Devices::NewStub(channel_) }, filesystem_stub_{ DeviceFilesystem::NewStub(channel_) }
     {
+
     }
 
     void refreshDevices(const std::function<bool(const DevicesResponse::Device&)>& filter = nullptr)
@@ -88,7 +97,6 @@ public:
 
     std::optional<std::filesystem::path> putFile(const std::string& uri, const std::filesystem::path& local_path, const std::filesystem::path device_directory)
     {
-
         std::filesystem::path filename = local_path.filename();
 
         std::filesystem::path device_path = device_directory / filename;
@@ -115,10 +123,11 @@ public:
         PutFileResponse response;
         grpc::ClientContext context;
         auto status = filesystem_stub_->PutFile(&context, request, &response);
-        
+
         if (!status.ok())
         {
             std::cerr << status.error_message();
+            return {};
         }
         if (response.path().empty())
         {
@@ -126,6 +135,45 @@ public:
             return {};
         }
         return response.path();
+    }
+
+    std::optional<std::vector<uint8_t>> getFile(const std::string& uri, const std::filesystem::path& device_path)
+    {
+        std::filesystem::path filename = device_path.filename();
+
+        GetFileRequest request;
+        {
+            request.set_uri(uri);
+            request.set_path(device_path.generic_string());
+        }
+
+        GetFileResponse response;
+        grpc::ClientContext context;
+        auto status = filesystem_stub_->GetFile(&context, request, &response);
+
+        if (!status.ok())
+        {
+            std::cerr << status.error_message();
+            return {};
+        }
+        return { { response.data().begin(), response.data().end() } };
+    }
+    std::optional<std::filesystem::path> getFile(const std::string& uri, const std::filesystem::path& device_path, std::filesystem::path local_path, bool is_filename = false)
+    {
+        auto data = getFile(uri, device_path);
+        if (!data)
+        {
+            return {};
+        }
+        if (!is_filename)
+        {
+            std::filesystem::path filename = device_path.filename();
+            local_path /= filename;
+        }
+        std::ofstream of(local_path, std::ios::out | std::ios::binary);
+        std::copy(data->cbegin(), data->cend(),
+            std::ostream_iterator<uint8_t>(of));
+        return local_path;
     }
 
     void bootFile(const std::string& uri, const std::filesystem::path& file_path)
@@ -147,7 +195,7 @@ public:
         grpc::Status status = filesystem_stub_->RemoveFile(&context, request, &response);
         return status.ok();
     }
-    
+
     bool renameFile(const std::string& uri, const std::filesystem::path& from, const std::filesystem::path& to)
     {
         RenameFileRequest request;

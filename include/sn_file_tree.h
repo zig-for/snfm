@@ -1,7 +1,7 @@
 ﻿#pragma once
-
+#ifdef WIN32
 #define WIN_DROP_SOURCE
-
+#endif
 #ifdef WIN_DROP_SOURCE
 #include "win_dnd.h"
 #endif
@@ -16,7 +16,8 @@
 #include <wx/artprov.h>
 #include "snes.xpm"
 
-
+#include <type_traits>
+#include <wx/busyinfo.h>
 #define PROTECT_SYSTEM_FOLDERS(fileId) if (GetRootItem() == fileId || GetItemText(fileId) == "/" || (GetItemText(fileId) == "sd2snes" && GetItemParent(fileId) == GetRootItem())){ return false; }
 
 class SNFileTree : public wxTreeCtrl, wxFileDropTarget
@@ -30,6 +31,8 @@ class SNFileTree : public wxTreeCtrl, wxFileDropTarget
         SNIMenuItem_Rename,
         SNIMenuItem_CreateDirectory,
         SNIMenuItem_Delete,
+        SNIMenuItem_Import,
+        SNIMenuItem_Export,
     };
 
     enum SNIcon
@@ -43,6 +46,23 @@ class SNFileTree : public wxTreeCtrl, wxFileDropTarget
 public:
     wxWindow* parent_window_;
 
+    
+
+    template <typename F>
+    auto CommunicateWithDevice(const std::string& msg, F f)
+    {
+        wxBusyInfo wait(
+            (
+                wxBusyInfoFlags()
+                .Parent(this)
+                .Icon(wxArtProvider::GetIcon(wxART_REFRESH))
+                .Title(msg)
+                .Foreground(*wxWHITE)
+                .Background(*wxBLACK)
+                .Transparency(4 * wxALPHA_OPAQUE / 5)
+                ));
+        return f();
+    }
     SNFileTree() : wxTreeCtrl() {}
     SNFileTree(wxWindow* parent, const std::string& uri, SNIConnection* sni)
         : parent_window_(parent), uri_(uri), sni_(sni),
@@ -60,14 +80,15 @@ public:
         Bind(wxEVT_TREE_BEGIN_DRAG, &SNFileTree::OnTreeDragBegin, this);
         Bind(wxEVT_TREE_END_DRAG, &SNFileTree::OnTreeDragEnd, this);
         Bind(wxEVT_TREE_END_LABEL_EDIT, &SNFileTree::OnLabelEdit, this);
+        Bind(wxEVT_TREE_SEL_CHANGING, &SNFileTree::OnSelect, this);
 
         dir_menu_ = new wxMenu();
         dir_menu_->Append(SNIMenuItem_Run, "Run");
         dir_menu_->Append(SNIMenuItem_Rename, "Rename");
         dir_menu_->Append(SNIMenuItem_Refresh, "Refresh");
         dir_menu_->Append(SNIMenuItem_CreateDirectory, "Create Directory");
-        //dir_menu_->Append(SNIMenuItem_CreateDirectory, "Import file");
-        //dir_menu_->Append(SNIMenuItem_CreateDirectory, "Export file");
+        dir_menu_->Append(SNIMenuItem_Import, "Import...");
+        dir_menu_->Append(SNIMenuItem_Export, "Export...");
 
         Bind(wxEVT_COMMAND_MENU_SELECTED, &SNFileTree::OnContextMenuSelected, this);
 
@@ -90,7 +111,7 @@ public:
 
     void setUri(const std::string& uri);
 
-    std::filesystem::path constructPath(wxTreeItemId folder);
+    std::filesystem::path constructPath(wxTreeItemId folder, wxTreeItemId root = wxTreeItemId());
 
     bool isPlaceHolder(wxTreeItemId id);
 
@@ -98,12 +119,10 @@ public:
 
     void requestBoot(wxTreeItemId fileId);
 
-
     bool requestDelete(wxTreeItemId fileId, bool top = true);
 
     // todo: we should handle this via the delete event
     void fixupEmptyFolder(wxTreeItemId folderId);
-
 
     void requestDeleteOfSelection();
 
@@ -117,6 +136,8 @@ public:
 
     bool rename(wxTreeItemId file, const std::string& name);
 private:
+
+    void OnSelect(wxTreeEvent& event);
 
     void MouseEnter(wxMouseEvent& evt);
 
@@ -151,14 +172,12 @@ private:
     }
     void OnRightClick(wxTreeEvent& event)
     {
-        if (HasChildren(event.GetItem()))
-        {
-            PopupMenu(dir_menu_);
-        }
-        else
-        {
-            PopupMenu(dir_menu_);
-        }
+        bool has_children = HasChildren(event.GetItem());
+        
+        dir_menu_->Enable(SNIMenuItem_Run, !has_children);
+        
+        PopupMenu(dir_menu_);
+
     }
 public:
     wxTreeItemId GetItemUnderMouse()
@@ -170,14 +189,59 @@ public:
         return hit;
     }
 private:
-    void OnTreeDragBegin(wxTreeEvent& event)
-    {
-        is_dragging_ = true;
+    
 
-        event.Allow();
-        GetSelections(start_drag_items_);
+    void RecursiveChildren(wxTreeItemId item, std::vector<wxTreeItemId>* out, bool allow_parents, bool refresh = true)
+    {
+
+        if (refresh && ItemHasChildren(item))
+        {
+            wxTreeItemIdValue cookie;
+            wxTreeItemId childId = GetFirstChild(item, cookie);
+            if (GetItemText(childId) == "...")
+            {
+                refreshFolder(item);
+            }
+        }
+        ;       wxTreeItemIdValue cookie;
+        wxTreeItemId childId = GetFirstChild(item, cookie);
+        while (childId.IsOk())
+        {
+            if (allow_parents || !ItemHasChildren(childId))
+            {
+                out->push_back(childId);
+            }
+            RecursiveChildren(childId, out, allow_parents);
+            childId = GetNextChild(childId, cookie);
+        }
     }
 
+    std::vector<wxTreeItemId> ReduceTree(const std::vector<wxTreeItemId>& items)
+    {
+        std::unordered_set<wxTreeItemId::Type> reduced_items;
+
+        // First gather up all the things that _should_ be removed because they have a parent
+        for (wxTreeItemId item : items)
+        {
+            std::vector<wxTreeItemId> children;
+            RecursiveChildren(item, &children, true);
+            for (wxTreeItemId child : children)
+            {
+                reduced_items.insert(child.GetID());
+            }
+        }
+
+        // now reduce
+        std::vector<wxTreeItemId> out;
+        for (wxTreeItemId item : items)
+        {
+            if (reduced_items.count(item.GetID()) == 0)
+            {
+                out.push_back(item);
+            }
+        }
+        return out;
+    }
 
     void StartDrop()
     {
@@ -186,7 +250,31 @@ private:
         std::filesystem::path temp_folder_name = std::tmpnam(nullptr);
         std::filesystem::create_directory(temp_folder_name);
 
-        UINT uFileCount = start_drag_items_.Count();
+        std::vector<std::string> device_filenames;
+        std::vector<std::wstring> local_filenames_w;
+
+        for (const auto& treeItem : start_drag_items_)
+        {
+            std::vector<wxTreeItemId> items;
+            if (ItemHasChildren(treeItem))
+            {
+                RecursiveChildren(treeItem, &items, false);
+            }
+            else
+            {
+                items.push_back(treeItem);
+            }
+            for (const wxTreeItemId& item : items)
+            {
+                device_filenames.push_back(constructPath(item).generic_string());
+                local_filenames_w.push_back(constructPath(item, treeItem).generic_wstring());
+            }
+
+        }
+
+
+
+        UINT uFileCount = device_filenames.size();
 
         // The CFSTR_FILEDESCRIPTOR format expects a 
         // FILEGROUPDESCRIPTOR structure followed by an
@@ -196,6 +284,7 @@ private:
             (uFileCount - 1) * sizeof(FILEDESCRIPTOR);
         HGLOBAL hFileDescriptor = GlobalAlloc(
             GHND | GMEM_SHARE, uBuffSize);
+
 
         if (hFileDescriptor)
         {
@@ -216,15 +305,14 @@ private:
                     //int nSelItem = m_fileList.GetNextSelectedItem(pos);
                     ZeroMemory(&pFileDescriptorArray[index],
                         sizeof(FILEDESCRIPTOR));
-                    lstrcpy(pFileDescriptorArray[index].cFileName, GetItemText(start_drag_items_[i]).ToStdWstring().c_str());
+                    lstrcpy(pFileDescriptorArray[index].cFileName, (local_filenames_w[i]).c_str());
                     //m_DataSrc.m_Files.Add(
                    //     pFileDescriptorArray[index].cFileName);
                     pFileDescriptorArray[index].dwFlags =
-                        FD_FILESIZE | FD_ATTRIBUTES;
-                    pFileDescriptorArray[index].nFileSizeLow = 512;
-                    pFileDescriptorArray[index].nFileSizeHigh = 0;
+                        FD_ATTRIBUTES;
                     pFileDescriptorArray[index].dwFileAttributes =
                         FILE_ATTRIBUTE_NORMAL;
+
                     index++;
                 }
             }
@@ -241,12 +329,16 @@ private:
         FORMATETC etcDescriptor = {
             (CLIPFORMAT)RegisterClipboardFormat(CFSTR_FILEDESCRIPTOR),
             NULL, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
-        SNIAfxDropSource* dataSource = new SNIAfxDropSource([this]
+        SNIAfxDropSource* dataSource = new SNIAfxDropSource(
+            std::move(device_filenames),
+            [this](const std::string& path)
             {
-                // Gross - send raw window message to tell the tree view that we aren't dragging anymore
-                MSWWindowProc(WM_RBUTTONUP, 0, 0);
-
-            });
+                return CommunicateWithDevice("Fetching " + path, [this, &path]() -> auto
+                    {
+                        return sni_->getFile(uri_, path);
+                    });
+            }
+        );
         dataSource->CacheGlobalData(RegisterClipboardFormat(
             CFSTR_FILEDESCRIPTOR), hFileDescriptor, &etcDescriptor);
 
@@ -255,7 +347,7 @@ private:
         // device, like an FTP site, an add-on device, or an archive
         FORMATETC etcContents = {
             (CLIPFORMAT)RegisterClipboardFormat(CFSTR_FILECONTENTS),
-            NULL, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
+            NULL, DVASPECT_CONTENT, -1, TYMED_HGLOBAL | TYMED_ISTREAM | TYMED_FILE };
         dataSource->DelayRenderFileData(RegisterClipboardFormat(
             CFSTR_FILECONTENTS), &etcContents);
 
@@ -263,18 +355,28 @@ private:
 
         DROPEFFECT dwEffect = dataSource->DoDragDrop(
             DROPEFFECT_COPY, 0, feedback);
-        dataSource->InternalRelease();
-        feedback->InternalRelease();
+
         // Free memory in case of failure
         if (dwEffect == DROPEFFECT_NONE)
         {
             GlobalFree(hFileDescriptor);
         }
+
+        // Gross - send raw window message to tell the tree view that we aren't dragging anymore
+        if (!feedback->returned_to_window_)
+        {
+            start_drag_items_.clear();
+            MSWWindowProc(WM_RBUTTONUP, 0, 0);
+        }
+        dataSource->InternalRelease();
+        feedback->InternalRelease();
 #endif
     }
 
     bool isAncestor(wxTreeItemId maybeAncestor, wxTreeItemId check);
+
     bool is_dragging_ = false;
+    void OnTreeDragBegin(wxTreeEvent& event);
     void OnTreeDragEnd(wxTreeEvent& event);
 
     void OnExpanding(wxTreeEvent& event);
@@ -286,6 +388,79 @@ private:
     void OnKeyDown(wxTreeEvent& event);
 
     void OnLabelEdit(wxTreeEvent& event);
+
+    void PathToFiles(const std::filesystem::path& path, std::vector<std::pair<std::filesystem::path, std::filesystem::path>>* out)
+    {
+        if (std::filesystem::is_directory(path))
+        {
+            for (auto const& child : std::filesystem::recursive_directory_iterator{ path })
+            {
+                if (std::filesystem::is_regular_file(child))
+                {
+                    out->push_back({ path, child });
+                }
+            }
+        }
+        else if (std::filesystem::is_regular_file(path))
+        {
+            out->push_back({ path, path });
+        }
+    }
+
+    void MkDirP(std::filesystem::path dir)
+    {
+        std::filesystem::path parent = dir.parent_path();
+        if (parent != dir)
+        {
+            MkDirP(dir.parent_path());
+        }
+        sni_->makeDirectory(uri_, dir.generic_string());
+    }
+
+    void ImportFilesTo(wxTreeItemId item, const wxArrayString& filenames_in)
+    {
+        item = parentDirIfNotDir(item);
+        std::filesystem::path device_folder = constructPath(item);
+
+        UnselectAll();
+
+        std::vector<std::filesystem::path> successful_files;
+
+
+        std::vector<std::pair<std::filesystem::path, std::filesystem::path>> filenames;
+        for (const wxString& file : filenames_in)
+        {
+            std::filesystem::path path(file.ToStdWstring());
+            PathToFiles(path, &filenames);
+        }
+
+        for (auto& pair : filenames)
+        {
+            auto [dir, file] = pair;
+
+            std::filesystem::path relative_path = device_folder / std::filesystem::relative(file, dir.parent_path()).parent_path();
+            MkDirP(relative_path);
+            
+            auto result = sni_->putFile(uri_, file,relative_path);
+            if (result.has_value())
+            {
+                successful_files.push_back(*result);
+            }
+        }
+
+        // todo: wrong for folder imports, potentially
+        refreshFolder(item);
+
+        // Can only showNameUnder() after a refresh, or else the tree won't be built yet
+        for (const auto& file : successful_files)
+        {
+            wxTreeItemId childId = showNameUnder(item, file.filename().generic_string());
+            if (childId.IsOk())
+            {
+                SelectItem(childId);
+            }
+        }
+    }
 
     virtual bool OnDropFiles(wxCoord 	x,
         wxCoord 	y,
@@ -299,8 +474,9 @@ private:
     //SNIFileDataObject* fileDataObject;
 
     //wxTreeItemId start_drag_item_;
-    wxArrayTreeItemIds start_drag_items_;
+    std::vector<wxTreeItemId> start_drag_items_;
     bool in_tree_drag_ = false;
 
 };
+
 

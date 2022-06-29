@@ -17,6 +17,7 @@
 
 #include "wx/evtloop.h"
 
+#include <optional>
 // A dummy CWnd pointing to a wxWindow's HWND
 class CDummyWindow : public CWnd
 {
@@ -32,12 +33,17 @@ struct SNIAfxDropSource : COleDataSource
     DECLARE_DYNAMIC(SNIAfxDropSource)
     // todo stop drag
 
-    SNIAfxDropSource(std::function<void()> stop_handler) : stop_handler(stop_handler)
+    using GetFileHandler = std::function<
+        std::optional<std::vector<uint8_t>>(const std::string&)
+    >;
+    SNIAfxDropSource(std::vector<std::string> files,
+        GetFileHandler get_file_handler) 
+        :
+            get_file_handler(get_file_handler),
+            files(files)
     {
 
     }
-
-    std::function<void()> stop_handler;
 
     BOOL OnRenderFileData(
         LPFORMATETC lpFormatEtc, CFile* pFile)
@@ -48,36 +54,20 @@ struct SNIAfxDropSource : COleDataSource
         {
             if (lpFormatEtc->tymed & (TYMED_FILE | TYMED_ISTREAM))
             {
-                HGLOBAL hGlob = NULL;
-                const int buffSize = 512;
-                hGlob = GlobalAlloc(GMEM_FIXED, buffSize);
-                if (hGlob)
+                auto bytes = get_file_handler(files[lpFormatEtc->lindex]);
+                if (bytes)
                 {
-                    LPBYTE pBytes = (LPBYTE)GlobalLock(hGlob);
-                    if (pBytes)
-                    {
-                        // lpFormatEtc->lindex can be used to identify
-                        // the file that's being copied
-                        /*memset(pBytes, (int)m_Files.GetAt(
-                            lpFormatEtc->lindex)[0], buffSize);*/
-
-                        pFile->Write(pBytes, buffSize);
-                    }
-                    GlobalUnlock(hGlob);
+                    pFile->Write(&*bytes->begin(), bytes->size());
+                    // Need to return TRUE to indicate success to Explorer
+                    return TRUE;
                 }
-                GlobalFree(hGlob);
-                // Need to return TRUE to indicate success to Explorer
-
-                if (stop_handler)
-                {
-                    stop_handler();
-                }
-                return TRUE;
             }
         }
         return COleDataSource::OnRenderFileData(
             lpFormatEtc, pFile);
     }
+    std::vector<std::string> files;
+    GetFileHandler get_file_handler;
 
 };
 class SNFileTree;
@@ -93,6 +83,8 @@ struct SNWinDropFeedback : COleDropSource
         DWORD dwKeyState);
 
     SNFileTree* tree;
+    bool returned_to_window_ = false;
+
 };
 
 

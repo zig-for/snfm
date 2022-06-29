@@ -56,9 +56,7 @@ FileManagerFrame::FileManagerFrame(const wxString& title, const wxPoint& pos, co
     : wxFrame(NULL, wxID_ANY, title, pos, size)
 {
     wxMenu* menuFile = new wxMenu;
-    //menuFile->Append(ID_Hello, "&Hello...\tCtrl-H",
-    //    "Help string shown in status bar for this menu item");
-    //menuFile->AppendSeparator();
+    
     menuFile->Append(wxID_EXIT);
     wxMenu* menuHelp = new wxMenu;
     menuHelp->Append(wxID_ABOUT);
@@ -77,7 +75,10 @@ FileManagerFrame::FileManagerFrame(const wxString& title, const wxPoint& pos, co
 
     bigBox->Add(refreshBox, 0);
 
-    wxButton* button = new wxButton(this, wxID_ANY, L"🗘", wxDefaultPosition, wxSize(25, 25));
+    wxBitmap refresh_icon = wxArtProvider::GetIcon(wxART_REFRESH);
+    wxBitmap::Rescale(refresh_icon, wxSize(15, 15));
+    wxBitmapButton* button = new wxBitmapButton(this, wxID_ANY, refresh_icon, wxDefaultPosition, wxSize(25, 25));
+    
 
     devicesDropdown_ = new wxComboBox(this, wxID_ANY, "", wxDefaultPosition, wxSize(2500, 25), {}, wxCB_READONLY);
 

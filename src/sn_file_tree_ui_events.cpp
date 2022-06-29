@@ -13,22 +13,51 @@ void SNFileTree::MouseLeave(wxMouseEvent& evt)
         StartDrop();
     }
 }
+void SNFileTree::OnTreeDragBegin(wxTreeEvent& event)
+{
+    is_dragging_ = true;
 
+    event.Allow();
+    start_drag_items_.clear();
+    wxArrayTreeItemIds ids;
+    GetSelections(ids);
+    for (auto id : ids)
+    {
+        start_drag_items_.push_back(id);
+    }
+    start_drag_items_ = ReduceTree(start_drag_items_);
+
+}
 void SNFileTree::OnTreeDragEnd(wxTreeEvent& event)
 {
     is_dragging_ = false;
-    UnselectAll();
     wxTreeItemId to = event.GetItem();
     if (to.IsOk())
     {
+        std::vector<std::string> file_names;
         for (wxTreeItemId from : start_drag_items_)
         {
+
             if (from.IsOk())
             {
+                file_names.push_back(GetItemText(from).ToStdString());
+
                 if (!isAncestor(from, to))
                 {
                     moveToFolder(from, to);
                 }
+            }
+        }
+        UnselectAll();
+
+        // Wait until we are done messing with the directory tree to mess with selection
+        for (std::string file_name : file_names)
+        {
+            std::filesystem::path to_path = constructPath(to) / file_name;
+            wxTreeItemId childId = showNameUnder(to, file_name);
+            if (childId.IsOk())
+            {
+                SelectItem(childId);
             }
         }
     }
@@ -53,6 +82,10 @@ void SNFileTree::OnActivate(wxTreeEvent& event)
 }
 void SNFileTree::OnContextMenuSelected(wxCommandEvent& event)
 {
+    static const wxChar* FILETYPES = _T(
+        "Super Nintendo ROMs (*.sfc, *.smc)|*.sfc;*.smc|"
+        "All files (*.*)|*.*"
+    );
     switch (event.GetId())
     {
     case SNIMenuItem_Run:
@@ -79,6 +112,56 @@ void SNFileTree::OnContextMenuSelected(wxCommandEvent& event)
         }
     }
     break;
+    case SNIMenuItem_Import:
+    {
+        wxFileDialog openFileDialog(this, _("Select File to Import"), "", "", FILETYPES, wxFD_OPEN | wxFD_FILE_MUST_EXIST | wxFD_MULTIPLE);
+
+        if (openFileDialog.ShowModal() == wxID_CANCEL)
+        {
+            return;
+        }
+        wxArrayString filenames;
+        openFileDialog.GetFilenames(filenames);
+        ImportFilesTo(GetFocusedItem(), filenames);
+    }
+    break;
+    case SNIMenuItem_Export:
+    {
+        auto selected_item = GetFocusedItem();
+        bool has_children = ItemHasChildren(selected_item);
+        wxFileDialog openFileDialog(this, _("Export to..."), "", GetItemText(selected_item), has_children ? L"All Files (*.*)|*.*" : FILETYPES, wxFD_SAVE);
+
+        if (openFileDialog.ShowModal() == wxID_CANCEL)
+        {
+            return;
+        }
+
+        if (has_children)
+        {
+            std::vector<wxTreeItemId> items;
+            RecursiveChildren(selected_item, &items, false);
+
+
+            std::filesystem::path local_root = openFileDialog.GetPath().ToStdWstring();
+
+            for (const wxTreeItemId& item : items)
+            {
+                std::filesystem::path device_path = constructPath(item);
+                // Make sure to strip off whatever the existing folder is in favor of the new saved name
+                std::filesystem::path a = constructPath(item);
+                std::filesystem::path b = constructPath(selected_item);
+                std::filesystem::path c = std::filesystem::relative(a, b);
+                std::filesystem::path path = local_root / c;
+                std::filesystem::create_directories(path.parent_path());
+                sni_->getFile(uri_, device_path, path, true);
+            }
+        }
+        else
+        {
+            sni_->getFile(uri_, constructPath(selected_item), openFileDialog.GetPath().ToStdWstring(), true);
+        }
+    }
+    break;
     case SNIMenuItem_Delete:
         requestDeleteOfSelection();
         break;
@@ -97,6 +180,11 @@ void SNFileTree::OnKeyDown(wxTreeEvent& event)
     }
 }
 
+void SNFileTree::OnSelect(wxTreeEvent& event)
+{
+
+}
+
 void SNFileTree::OnLabelEdit(wxTreeEvent& event)
 {
     if (event.IsEditCancelled())
@@ -109,10 +197,7 @@ void SNFileTree::OnLabelEdit(wxTreeEvent& event)
     }
 }
 
-bool SNFileTree::OnDropFiles(wxCoord 	x,
-    wxCoord 	y,
-    const wxArrayString& filenames
-)
+bool SNFileTree::OnDropFiles(wxCoord x, wxCoord y, const wxArrayString& filenames)
 {
     int mask = wxTREE_HITTEST_ONITEMBUTTON | wxTREE_HITTEST_ONITEMICON | wxTREE_HITTEST_ONITEMLABEL | wxTREE_HITTEST_ONITEMRIGHT;
     int flags = 0;
@@ -122,34 +207,7 @@ bool SNFileTree::OnDropFiles(wxCoord 	x,
 
     if ((flags & mask) && hit.IsOk())
     {
-        hit = parentDirIfNotDir(hit);
-        std::filesystem::path device_path = constructPath(hit);
-
-        UnselectAll();
-
-        std::vector<std::filesystem::path> successful_files;
-
-        for (const wxString& file : filenames)
-        {
-            auto result = sni_->putFile(uri_, file.ToStdString(), device_path);
-            if (result.has_value())
-            {
-                successful_files.push_back(*result);
-            }
-        }
-
-        refreshFolder(hit);
-
-        // Can only showNameUnder() after a refresh, or else the tree won't be built yet
-        for (const auto& file : successful_files)
-        {
-            wxTreeItemId childId = showNameUnder(hit, file.filename().generic_string());
-            if (childId.IsOk())
-            {
-                SelectItem(childId);
-            }
-        }
-
+        ImportFilesTo(hit, filenames);
         return true;
     }
 

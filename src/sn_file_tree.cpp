@@ -5,6 +5,10 @@ void SNFileTree::setUri(const std::string& uri)
 {
     if (uri == uri_)
     {
+        if (!uri_.empty())
+        {
+            refreshFolder(GetRootItem());
+        }
         return;
     }
     uri_ = uri;
@@ -25,15 +29,19 @@ void SNFileTree::setUri(const std::string& uri)
 
 }
 
-std::filesystem::path SNFileTree::constructPath(wxTreeItemId folder)
+std::filesystem::path SNFileTree::constructPath(wxTreeItemId folder, wxTreeItemId rootItem)
 {
+    if (!rootItem.IsOk())
+    {
+        rootItem = GetRootItem();
+    }
     wxTreeItemId parent = GetItemParent(folder);
 
-    if (!parent.IsOk())
+    if (folder == rootItem || !parent.IsOk())
     {
-        return std::filesystem::path("/", std::filesystem::path::generic_format);
+        return std::filesystem::path(GetItemText(rootItem).ToStdString(), std::filesystem::path::generic_format);
     }
-    return constructPath(parent) / GetItemText(folder).ToStdString();
+    return constructPath(parent, rootItem) / GetItemText(folder).ToStdString();
 }
 
 bool SNFileTree::isPlaceHolder(wxTreeItemId id)
