@@ -62,6 +62,4 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: snfm
-          path: |
-            snfm/out/build/windows-x64-release/*.exe
-            snfm/out/build/windows-x64-release/*.dll
+          path: **
