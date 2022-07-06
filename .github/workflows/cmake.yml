@@ -13,6 +13,9 @@ jobs:
   build:
     runs-on: windows-latest
     steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
       # Install latest CMake.
       - uses: lukka/get-cmake@latest
    
@@ -39,8 +42,6 @@ jobs:
           # (i.e. let CMake run `vcpkg install`) using the vcpkg.cmake toolchain.
           # runVcpkgInstall: true
 
-      - name: ls
-        run: dir ${{ github.workspace }}
       - name: Run CMake consuming CMakePreset.json and vcpkg.json by mean of vcpkg.
         uses: lukka/run-cmake@v10
         with:
