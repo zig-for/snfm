@@ -13,7 +13,7 @@ project(snfm)
 include(FindProtobuf)
 find_package(Protobuf REQUIRED)
 find_package(gRPC CONFIG REQUIRED)
-find_package(wxWidgets COMPONENTS core base)
+find_package(wxWidgets REQUIRED COMPONENTS core base)
 
 set(CMAKE_CXX_STANDARD 20)
 find_program(GRPC_CPP_PLUGIN grpc_cpp_plugin) # Get full path to plugin
@@ -88,17 +88,20 @@ target_link_libraries(send_file PRIVATE snfm_common)
 
 add_executable(manage_files WIN32 "src/sn_file_tree.cpp" "src/sn_file_tree_ui_events.cpp" "src/manage_files.cpp" "src/win_dnd.cpp")
 target_link_libraries(manage_files PRIVATE snfm_common)
-find_package(wxWidgets REQUIRED)
-target_compile_definitions(manage_files PRIVATE ${wxWidgets_DEFINITIONS} "$<$<CONFIG:DEBUG>:${wxWidgets_DEFINITIONS_DEBUG}>" )
+target_compile_definitions(manage_files PRIVATE ${wxWidgets_DEFINITIONS} "$<$<CONFIG:DEBUG>:${wxWidgets_DEFINITIONS_DEBUG}>" wxDEBUG_LEVEL=0 )
 target_include_directories(manage_files PRIVATE ${wxWidgets_INCLUDE_DIRS})
-target_link_libraries(manage_files PRIVATE ${wxWidgets_LIBRARIES})         
+target_link_libraries(manage_files PRIVATE ${wxWidgets_LIBRARIES}) 
 
-
-set_target_properties(manage_files PROPERTIES WIN32_EXECUTABLE TRUE)
-
+# Magic bits to enable MFC
 add_definitions(-D_AFXDLL)
 set(CMAKE_MFC_FLAG 1)
+set_target_properties(manage_files PROPERTIES WIN32_EXECUTABLE TRUE)
 
 
-add_compile_options("$<$<C_COMPILER_ID:MSVC>:/utf-8>")
-add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
+
+
+
+#add_compile_options("$<$<C_COMPILER_ID:MSVC>:/utf-8>")
+#add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
+
+
