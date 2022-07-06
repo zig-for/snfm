@@ -38,7 +38,18 @@ jobs:
           # It is highly suggested to let `run-cmake` to run vcpkg (i.e. `false`)
           # (i.e. let CMake run `vcpkg install`) using the vcpkg.cmake toolchain.
           # runVcpkgInstall: true
+      - name: Fetch action
+        id: pl
+        uses: Rishabh510/Path-lister-action@master
+        with:
+          path: "${{ github.workspace }}"
 
+      - name: Output results
+        run: |
+          echo "Found ${{ steps.pl.outputs.path_count }} file(s) with this extension:"
+          for i in ${{ steps.pl.outputs.paths }}; do
+          echo $i
+          done
       - name: Run CMake consuming CMakePreset.json and vcpkg.json by mean of vcpkg.
         uses: lukka/run-cmake@v10
         with:
