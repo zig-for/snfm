@@ -57,12 +57,11 @@ jobs:
 
           # This is the name of the CMakePresets.json's configuration to build the project.
           # buildPreset: 'windows-x64-release'
-      - run: dir out
 
       - name: Archive build
         uses: actions/upload-artifact@v3
         with:
           name: snfm
           path: |
-            out/build/windows-x64-release/*.exe
-            out/build/windows-x64-release/*.dll
+            snfm/out/build/windows-x64-release/*.exe
+            snfm/out/build/windows-x64-release/*.dll
