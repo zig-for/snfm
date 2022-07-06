@@ -56,7 +56,7 @@ jobs:
           configurePreset: 'windows-x64-release'
 
           # This is the name of the CMakePresets.json's configuration to build the project.
-          # buildPreset: 'windows-x64-release'
+          buildPreset: 'windows-x64-release'
 
       - name: Archive build
         uses: actions/upload-artifact@v3
