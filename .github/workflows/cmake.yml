@@ -12,9 +12,6 @@ env:
 jobs:
   build:
     runs-on: windows-latest
-    defaults:
-      run:
-        working-directory: C:/snfm
     steps:
       - uses: actions/checkout@v2
         with:
@@ -27,7 +24,7 @@ jobs:
         with:
           # This is the default location of the directory containing vcpkg sources.
           # Change it to the right location if needed.
-          # vcpkgDirectory: '${{ github.workspace }}/vcpkg'
+          vcpkgDirectory: 'C:/vcpkg'
 
           # If not using a submodule for vcpkg sources, this specifies which commit
           # id must be checkout from a Git repo. It must not set if using a submodule
