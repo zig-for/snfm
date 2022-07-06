@@ -63,5 +63,5 @@ jobs:
         with:
           name: snfm
           path: |
-            **/*.exe
-            **/*.dll
+            out/build/windows-x64-release/*.exe
+            out/build/windows-x64-release/*.dll
