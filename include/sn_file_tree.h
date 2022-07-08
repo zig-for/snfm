@@ -328,7 +328,7 @@ private:
         // immediately
         FORMATETC etcDescriptor = {
             (CLIPFORMAT)RegisterClipboardFormat(CFSTR_FILEDESCRIPTOR),
-            NULL, DVASPECT_CONTENT, -1, TYMED_ISTREAM };
+            NULL, DVASPECT_CONTENT, -1, TYMED_ISTREAM | TYMED_FILE };
         SNIAfxDropSource* dataSource = new SNIAfxDropSource(
             std::move(device_filenames),
             [this](const std::string& path)
