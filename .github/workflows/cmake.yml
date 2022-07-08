@@ -5,6 +5,8 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
+  release:
+    types: [published]
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
@@ -65,3 +67,22 @@ jobs:
           path: |
             out/build/windows-x64-release/*.exe
             out/build/windows-x64-release/*.dll
+  release:
+    if: github.event_name == 'release'
+    runs-on: windows-latest
+    needs: build
+    steps:
+      - name: Inject slug/short variables
+        uses: rlespinasse/github-slug-action@v3.x
+      - name: Get artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: snfm
+      - name: Upload binaries to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ env.GITHUB_REF_SLUG }}
+          overwrite: true
+          asset_name: snfm-win64.zip
+          file: ${{github.workspace}}/snfm.zip
