@@ -86,3 +86,22 @@ jobs:
           overwrite: true
           asset_name: snfm-win64.zip
           file: ${{github.workspace}}/snfm.zip
+
+  release-test:
+    runs-on: windows-latest
+    needs: build
+    steps:
+      - name: Inject slug/short variables
+        uses: rlespinasse/github-slug-action@v3.x
+      - name: Get artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: snfm
+      - name: Upload binaries to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          tag: v0.0.1
+          overwrite: true
+          asset_name: snfm-win64.zip
+          file: ${{github.workspace}}/snfm.zip
