@@ -8,6 +8,7 @@
 
 #include <shlobj.h>
 #include <ole2.h>
+#include <afxadv.h>
 
 
 #include <wx/wxprec.h>
@@ -58,7 +59,14 @@ struct SNIAfxDropSource : COleDataSource
                 auto bytes = get_file_handler(files[lpFormatEtc->lindex]);
                 if (bytes)
                 {
-                    pFile->Write(&*bytes->begin(), bytes->size());
+                    assert(pFile->IsKindOf(RUNTIME_CLASS(CSharedFile)));
+                    CSharedFile* pSharedFile = static_cast<CSharedFile*>(pFile);
+                    HGLOBAL h = GlobalAlloc(0, bytes->size());
+                    pSharedFile->SetHandle(h, 0);
+                    pSharedFile->SetLength(0);
+                    pSharedFile->SeekToBegin();
+                    pSharedFile->Write(&*bytes->begin(), bytes->size());
+                    
                     // Need to return TRUE to indicate success to Explorer
                     return TRUE;
                 }
