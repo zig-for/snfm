@@ -3,6 +3,7 @@
 #define WIN_DROP_SOURCE 
 #endif
 #ifdef WIN_DROP_SOURCE
+#include <afx.h>
 #include <afxole.h>         // MFC OLE classes
 
 #include <shlobj.h>
@@ -30,7 +31,7 @@ public:
 
 struct SNIAfxDropSource : COleDataSource
 {
-    DECLARE_DYNAMIC(SNIAfxDropSource)
+    //DECLARE_DYNAMIC(SNIAfxDropSource)
     // todo stop drag
 
     using GetFileHandler = std::function<

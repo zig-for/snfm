@@ -1,22 +1,17 @@
 cmake_minimum_required(VERSION 3.22)
-
+cmake_policy(SET CMP0091 NEW)
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 project(snfm)
-# vcpkg install protobuf protobuf:x64-windows grpc
-# TODO: maybe use magic cmake FetchContent
-# grpc install is really really slow :(
-# I miss linux
-# freaking antimalware exec using up 50 percent cpu
-# "-DCMAKE_TOOLCHAIN_FILE=D:/dev/vcpkg/scripts/buildsystems/vcpkg.cmake"
-# tested on VS 2022 toolchain and newest cmake :)
 
-# include(../vcpkg/scripts/buildsystems/vcpkg.cmake)
-include(FindProtobuf)
+# include(FindProtobuf)
+set ( Protobuf_USE_STATIC_LIBS ON )
 find_package(Protobuf REQUIRED)
 find_package(gRPC CONFIG REQUIRED)
 find_package(wxWidgets REQUIRED COMPONENTS core base)
 
 set(CMAKE_CXX_STANDARD 20)
 find_program(GRPC_CPP_PLUGIN grpc_cpp_plugin) # Get full path to plugin
+
 
 function(PROTOBUF_GENERATE_GRPC_CPP SRCS HDRS)
   if(NOT ARGN)
@@ -81,7 +76,7 @@ PROTOBUF_GENERATE_GRPC_CPP(PROTO_GRPC_SRCS PROTO_GRPC_HDRS sni/protos/sni/sni.pr
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR} include %)
 
 add_library(snfm_common ${PROTO_SRCS} ${PROTO_HDRS} ${PROTO_GRPC_SRCS} ${PROTO_GRPC_HDRS})
-target_link_libraries(snfm_common protobuf::libprotoc protobuf::libprotobuf protobuf::libprotobuf-lite gRPC::grpc++_unsecure)
+target_link_libraries(snfm_common protobuf::libprotoc protobuf::libprotobuf gRPC::grpc++_unsecure)
 
 add_executable(send_file "src/send_file.cpp")
 target_link_libraries(send_file PRIVATE snfm_common)
@@ -93,10 +88,9 @@ target_include_directories(manage_files PRIVATE ${wxWidgets_INCLUDE_DIRS})
 target_link_libraries(manage_files PRIVATE ${wxWidgets_LIBRARIES}) 
 
 # Magic bits to enable MFC
-add_definitions(-D_AFXDLL)
-set(CMAKE_MFC_FLAG 1)
+# add_definitions(-D_AFXDLL)
+set(CMAKE_MFC_FLAG 2)
 set_target_properties(manage_files PROPERTIES WIN32_EXECUTABLE TRUE)
-
 
 
 

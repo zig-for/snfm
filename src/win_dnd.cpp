@@ -4,7 +4,7 @@
 #ifdef WIN_DROP_SOURCE
 
 
-IMPLEMENT_DYNAMIC(SNIAfxDropSource, COleDataSource);
+//IMPLEMENT_DYNAMIC(SNIAfxDropSource, COleDataSource);
 
 SCODE SNWinDropFeedback::QueryContinueDrag(
     BOOL bEscapePressed,
