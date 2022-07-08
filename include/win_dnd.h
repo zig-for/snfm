@@ -46,40 +46,7 @@ struct SNIAfxDropSource : COleDataSource
     {
 
     }
-#if 0
-    BOOL OnRenderData(LPFORMATETC lpFormatEtc, LPSTGMEDIUM
-        lpStgMedium)
-    {
-        BOOL bReturn = FALSE;
-        if (lpFormatEtc->cfFormat ==
-            RegisterClipboardFormat(CFSTR_FILECONTENTS))
-        {
-            HRESULT hr = S_FALSE;
-            //Create an instance of CIStreamImpl which implements IStream
-           // CIStreamImpl* pStreamImpl = new CIStreamImpl();
-            //hr = pStreamImpl->QueryInterface(IID_IStream, (void FAR *
-             //   FAR*) & pStreamImpl);
-            if (SUCCEEDED(hr))
-            {
-                lpStgMedium->tymed = TYMED_ISTREAM;
-                lpStgMedium->pstm = pStreamImpl;
-                lpStgMedium->pUnkForRelease = NULL;
-                bReturn = TRUE;//Set the return value
-            }
-            else
-                pStreamImpl->Release();
-        }
-        /*
-        else
-            if (lpFormatEtc->cfFormat == g_cfFileGroupDescriptor)
-            {
-                lpStgMedium->tymed = TYMED_HGLOBAL;
-                lpStgMedium->hGlobal = CreateFileGroupDescriptor();
-                bReturn = TRUE; //Set the return value
-            }*/
-        return bReturn;
-    }
-#endif
+
     BOOL OnRenderFileData(
         LPFORMATETC lpFormatEtc, CFile* pFile)
     {
