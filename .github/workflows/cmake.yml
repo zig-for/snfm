@@ -78,14 +78,19 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: snfm
+      - name: Archive Release
+        uses: thedoctor0/zip-release@main
+        with:
+          type: zip
+          filename: snfm-win64.zip
+          path: snfm
       - name: Upload binaries to release
         uses: svenstaro/upload-release-action@v2
         with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ env.GITHUB_REF_SLUG }}
           overwrite: true
           asset_name: snfm-win64.zip
-          file: ${{github.workspace}}/snfm.zip
+          file: snfm-win64.zip
 
   release-test:
     runs-on: windows-latest
@@ -97,11 +102,16 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: snfm
+      - name: Archive Release
+        uses: thedoctor0/zip-release@main
+        with:
+          type: zip
+          filename: snfm-win64.zip
+          path: snfm
       - name: Upload binaries to release
         uses: svenstaro/upload-release-action@v2
         with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
           tag: v0.0.1
           overwrite: true
           asset_name: snfm-win64.zip
-          file: ${{github.workspace}}/snfm.zip
+          file: snfm-win64.zip
