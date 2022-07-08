@@ -12,6 +12,9 @@ env:
 jobs:
   build:
     runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: C:/snfm
     steps:
       - uses: actions/checkout@v2
         with:
