@@ -102,14 +102,15 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: snfm
+      - run: dir 
+      - run: dir snfm
       - name: Archive Release
         uses: thedoctor0/zip-release@main
         with:
           type: zip
           filename: snfm-win64.zip
           path: snfm
-      - run: dir 
-      - run: dir snfm
+
       - name: Upload binaries to release
         uses: svenstaro/upload-release-action@v2
         with:
