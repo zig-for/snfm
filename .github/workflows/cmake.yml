@@ -6,7 +6,7 @@ on:
   pull_request:
     branches: [ "main" ]
   release:
-    types: [published]
+    types: [ published ]
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
@@ -91,31 +91,6 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           tag: ${{ env.GITHUB_REF_SLUG }}
-          overwrite: true
-          asset_name: snfm-win64.zip
-          file: snfm-win64.zip
-
-  release-test:
-    runs-on: windows-latest
-    needs: build
-    steps:
-      - name: Inject slug/short variables
-        uses: rlespinasse/github-slug-action@v3.x
-      - name: Get artifact
-        uses: actions/download-artifact@v2
-        with:
-          name: snfm
-      - name: Archive Release
-        uses: thedoctor0/zip-release@main
-        with:
-          type: zip
-          filename: snfm-win64.zip
-          path: .
-
-      - name: Upload binaries to release
-        uses: svenstaro/upload-release-action@v2
-        with:
-          tag: v0.0.1
           overwrite: true
           asset_name: snfm-win64.zip
           file: snfm-win64.zip
