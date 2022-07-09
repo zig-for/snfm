@@ -104,7 +104,6 @@ public:
         std::ifstream file(local_path, std::ios::in | std::ios::binary);
         if (!file.is_open())
         {
-            // uh
             std::cout << "couldn't open file " << local_path << std::endl;
             return {};
         }
@@ -156,6 +155,7 @@ public:
             std::cerr << status.error_message();
             return {};
         }
+        
         return { { response.data().begin(), response.data().end() } };
     }
     std::optional<std::filesystem::path> getFile(const std::string& uri, const std::filesystem::path& device_path, std::filesystem::path local_path, bool is_filename = false)

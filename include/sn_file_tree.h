@@ -328,7 +328,7 @@ private:
         // immediately
         FORMATETC etcDescriptor = {
             (CLIPFORMAT)RegisterClipboardFormat(CFSTR_FILEDESCRIPTOR),
-            NULL, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
+            NULL, DVASPECT_CONTENT, -1, TYMED_ISTREAM | TYMED_FILE };
         SNIAfxDropSource* dataSource = new SNIAfxDropSource(
             std::move(device_filenames),
             [this](const std::string& path)
@@ -347,7 +347,7 @@ private:
         // device, like an FTP site, an add-on device, or an archive
         FORMATETC etcContents = {
             (CLIPFORMAT)RegisterClipboardFormat(CFSTR_FILECONTENTS),
-            NULL, DVASPECT_CONTENT, -1, TYMED_HGLOBAL | TYMED_ISTREAM | TYMED_FILE };
+            NULL, DVASPECT_CONTENT, -1, TYMED_ISTREAM };
         dataSource->DelayRenderFileData(RegisterClipboardFormat(
             CFSTR_FILECONTENTS), &etcContents);
 
