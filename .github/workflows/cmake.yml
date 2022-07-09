@@ -23,7 +23,7 @@ jobs:
           submodules: true
       # Install latest CMake.
       - uses: lukka/get-cmake@latest
-   
+      - run: mkdir C:/vcpkg
       - name: Restore artifacts, or setup vcpkg (do not install any package)
         uses: lukka/run-vcpkg@v10
         with:
