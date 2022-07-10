@@ -14,18 +14,18 @@ env:
 jobs:
   build:
     runs-on: windows-latest
-    defaults:
-      run:
-        working-directory: C:/
     steps:
       - uses: actions/checkout@v2
         with:
           submodules: true
+      - run: move snfm C:/
+      - run: mkdir C:/vcpkg
       # Install latest CMake.
       - uses: lukka/get-cmake@latest
       - name: Restore artifacts, or setup vcpkg (do not install any package)
         uses: lukka/run-vcpkg@v10
         with:
+          vcpkgDirectory: 'C:/vcpkg'
           # If not using a submodule for vcpkg sources, this specifies which commit
           # id must be checkout from a Git repo. It must not set if using a submodule
           # for vcpkg.
@@ -48,7 +48,7 @@ jobs:
           # This is the default path to the CMakeLists.txt along side the
           # CMakePresets.json. Change if you need have CMakeLists.txt and CMakePresets.json
           # located elsewhere.
-          cmakeListsTxtPath: '${{ github.workspace }}/CMakeLists.txt'
+          cmakeListsTxtPath: 'C:/snfm/CMakeLists.txt'
 
           # This is the name of the CMakePresets.json's configuration to use to generate
           # the project files. This configuration leverages the vcpkg.cmake toolchain file to
@@ -63,8 +63,8 @@ jobs:
         with:
           name: snfm
           path: |
-            out/build/windows-x64-release/*.exe
-            out/build/windows-x64-release/*.dll
+            C:/snfm/out/build/windows-x64-release/*.exe
+            C:/snfm/out/build/windows-x64-release/*.dll
   release:
     if: github.event_name == 'release'
     runs-on: windows-latest
