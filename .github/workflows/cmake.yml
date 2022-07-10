@@ -13,15 +13,13 @@ env:
   BUILD_TYPE: Release
 jobs:
   build:
-    defaults:
-      run:
-        working-directory: C:/
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v2
         with:
           submodules: true
-      - run: move {{github-workspace}} C:/
+      - run: mkdir C:/snfm
+      - run: move * C:/snfm
       - run: mkdir C:/vcpkg
       # Install latest CMake.
       - uses: lukka/get-cmake@latest
