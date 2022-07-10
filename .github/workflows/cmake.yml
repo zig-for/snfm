@@ -16,7 +16,7 @@ jobs:
     runs-on: windows-latest
     defaults:
       run:
-        working-directory: C:/snfm
+        working-directory: C:/
     steps:
       - uses: actions/checkout@v2
         with:
