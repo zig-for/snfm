@@ -73,25 +73,31 @@ endfunction()
 protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS sni/protos/sni/sni.proto)
 PROTOBUF_GENERATE_GRPC_CPP(PROTO_GRPC_SRCS PROTO_GRPC_HDRS sni/protos/sni/sni.proto)
 
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR} include %)
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR} include icons %)
 
 add_library(snfm_common ${PROTO_SRCS} ${PROTO_HDRS} ${PROTO_GRPC_SRCS} ${PROTO_GRPC_HDRS})
 target_link_libraries(snfm_common protobuf::libprotoc protobuf::libprotobuf gRPC::grpc++_unsecure)
 
 add_executable(send_file "src/send_file.cpp")
 target_link_libraries(send_file PRIVATE snfm_common)
+if(WIN32)
+target_sources(send_file PRIVATE "windows/send_file.rc")
+endif(WIN32)
 
-add_executable(manage_files WIN32 "src/sn_file_tree.cpp" "src/sn_file_tree_ui_events.cpp" "src/manage_files.cpp" "src/win_dnd.cpp")
+add_executable(manage_files WIN32 "src/sn_file_tree.cpp" "src/sn_file_tree_ui_events.cpp" "src/manage_files.cpp")
+if(WIN32)
+target_sources(manage_files PRIVATE "src/win_dnd.cpp" "windows/manage_files.rc")
+endif(WIN32)
 target_link_libraries(manage_files PRIVATE snfm_common)
 target_compile_definitions(manage_files PRIVATE ${wxWidgets_DEFINITIONS} "$<$<CONFIG:DEBUG>:${wxWidgets_DEFINITIONS_DEBUG}>" wxDEBUG_LEVEL=0 )
 target_include_directories(manage_files PRIVATE ${wxWidgets_INCLUDE_DIRS})
 target_link_libraries(manage_files PRIVATE ${wxWidgets_LIBRARIES}) 
 
+if(WIN32)
 # Magic bits to enable MFC
-# add_definitions(-D_AFXDLL)
 set(CMAKE_MFC_FLAG 2)
 set_target_properties(manage_files PROPERTIES WIN32_EXECUTABLE TRUE)
-
+endif()
 
 
 
