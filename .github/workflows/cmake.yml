@@ -5,6 +5,8 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
+  release:
+    types: [ published ]
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
@@ -14,14 +16,13 @@ jobs:
     runs-on: windows-latest
     defaults:
       run:
-        working-directory: C:/snfm
+        working-directory: C:/
     steps:
       - uses: actions/checkout@v2
         with:
           submodules: true
       # Install latest CMake.
       - uses: lukka/get-cmake@latest
-   
       - name: Restore artifacts, or setup vcpkg (do not install any package)
         uses: lukka/run-vcpkg@v10
         with:
@@ -68,3 +69,27 @@ jobs:
           path: |
             out/build/windows-x64-release/*.exe
             out/build/windows-x64-release/*.dll
+  release:
+    if: github.event_name == 'release'
+    runs-on: windows-latest
+    needs: build
+    steps:
+      - name: Inject slug/short variables
+        uses: rlespinasse/github-slug-action@v3.x
+      - name: Get artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: snfm
+      - name: Archive Release
+        uses: thedoctor0/zip-release@main
+        with:
+          type: zip
+          filename: snfm-win64.zip
+          path: .
+      - name: Upload binaries to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          tag: ${{ env.GITHUB_REF_SLUG }}
+          overwrite: true
+          asset_name: snfm-win64.zip
+          file: snfm-win64.zip
