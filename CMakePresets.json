@@ -16,7 +16,7 @@
           "type": "FILEPATH"
         },
         "VCPKG_TARGET_TRIPLET": "x64-windows-static-release",
-        "VCPKG_OVERLAY_TRIPLES": ".",
+        "VCPKG_OVERLAY_TRIPLES": "${sourceDir}",
         "VCPKG_BUILD_TYPE": "release"
       },
       "condition": {
