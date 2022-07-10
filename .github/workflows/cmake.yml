@@ -18,7 +18,7 @@ jobs:
       - uses: actions/checkout@v2
         with:
           submodules: true
-      - run: move snfm C:/
+      - run: move . C:/
       - run: mkdir C:/vcpkg
       # Install latest CMake.
       - uses: lukka/get-cmake@latest
