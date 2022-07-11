@@ -62,8 +62,8 @@ jobs:
         with:
           name: snfm
           path: |
-            C:/snfm/out/build/windows-x64-release/*.exe
-            C:/snfm/out/build/windows-x64-release/*.dll
+            out/build/windows-x64-release/*.exe
+            out/build/windows-x64-release/*.dll
   release:
     if: github.event_name == 'release'
     runs-on: windows-latest
