@@ -1,3 +1,5 @@
+#pragma once
+
 #include "sni.pb.h"
 #include "sni.grpc.pb.h"
 
@@ -16,11 +18,16 @@ static grpc::ChannelArguments GetChannelArgs()
     return ca;
 }
 
+bool HasCapability(const DevicesResponse::Device& device, DeviceCapability cap);
+
 class SNIConnection
 {
 public:
     SNIConnection(const std::string& address = "localhost:8191") // "172.27.16.1:8191"
-        : channel_{ grpc::CreateCustomChannel(address, grpc::InsecureChannelCredentials(), GetChannelArgs()) }, devices_stub_{ Devices::NewStub(channel_) }, filesystem_stub_{ DeviceFilesystem::NewStub(channel_) }
+        : channel_{ grpc::CreateCustomChannel(address, grpc::InsecureChannelCredentials(), GetChannelArgs()) }
+        , devices_stub_{ Devices::NewStub(channel_) }
+        , filesystem_stub_{ DeviceFilesystem::NewStub(channel_) }
+        , device_stub_{DeviceControl::NewStub(channel_)}
     {
 
     }
@@ -61,6 +68,18 @@ public:
             out.push_back(device.uri());
         }
         return out;
+    }
+
+    std::optional<DevicesResponse::Device> getDevice(const std::string& uri)
+    {
+        for (const auto& device : devices_)
+        {
+            if (device.uri() == uri)
+            {
+                return device;
+            }
+        }
+        return {};
     }
 
     ReadDirectoryResponse readDirectory(const std::string& uri, const std::string& directory)
@@ -174,6 +193,7 @@ public:
         return local_path;
     }
 
+
     void bootFile(const std::string& uri, const std::filesystem::path& file_path)
     {
         BootFileRequest request;
@@ -213,11 +233,30 @@ public:
         return status.ok();
     }
 
+    void resetToMenu(const std::string& uri)
+    {
+        ResetToMenuRequest request;
+        request.set_uri(uri);
+        ResetToMenuResponse response;
+        grpc::ClientContext context;
+        device_stub_->ResetToMenu(&context, request, &response);
+    }
+
+    void resetGame(const std::string& uri)
+    {
+        ResetSystemRequest request;
+        request.set_uri(uri);
+        ResetSystemResponse response;
+        grpc::ClientContext context;
+        device_stub_->ResetSystem(&context, request, &response);
+    }
 private:
     std::shared_ptr<grpc::Channel> channel_;
     std::unique_ptr<Devices::Stub> devices_stub_;
 
     std::unique_ptr<DeviceFilesystem::Stub> filesystem_stub_;
+    std::unique_ptr<DeviceControl::Stub> device_stub_;
+
 
     std::vector<DevicesResponse::Device> devices_;
 };
