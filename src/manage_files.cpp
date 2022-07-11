@@ -1,11 +1,7 @@
 ﻿#include "sn_file_tree.h"
 #include "manage_files.xpm"
 #include "snes.xpm"
-
-#if WIN32
-#include <CommonControls.h>
-#endif
-
+#include "icons.h"
 class MyApp : public wxApp
 {
 public:
@@ -70,10 +66,10 @@ bool MyApp::OnInit()
     return true;
 }
 
-
 FileManagerFrame::FileManagerFrame(const wxString& title, const wxPoint& pos, const wxSize& size)
     : wxFrame(NULL, wxID_ANY, title, pos, size)
 {
+
     SetIcon(manage_files_xpm);
 
     wxMenu* menuFile = new wxMenu;
@@ -84,7 +80,7 @@ FileManagerFrame::FileManagerFrame(const wxString& title, const wxPoint& pos, co
     resetToMenuButton_ = menuDevice->Append(MenuID_ResetToMenu, "Reset to Menu");
 
     wxMenu* menuHelp = new wxMenu;
-    menuHelp->Append(wxID_ABOUT);
+    menuHelp->Append(wxID_ABOUT)->SetBitmap(GetSystemIcon(SystemIcon::QUESTION  ));
 
     wxMenuBar* menuBar = new wxMenuBar;
     menuBar->Append(menuFile, "&File");
@@ -120,57 +116,10 @@ FileManagerFrame::FileManagerFrame(const wxString& title, const wxPoint& pos, co
     wxBitmap folder = wxArtProvider::GetBitmap(wxART_FOLDER);
 
     wxImageList* icons = new wxImageList(folder.GetWidth(), folder.GetHeight(), false, 4);
+    
 #if WIN32
-    SHFILEINFO icon_close = {};
-    SHFILEINFO icon_open = {};
-
-    HIMAGELIST imageList;
-    HIMAGELIST imageList2;
-    imageList = (HIMAGELIST)SHGetFileInfo(
-        _T("Doesn't matter"),
-        FILE_ATTRIBUTE_DIRECTORY,
-        &icon_close, sizeof icon_close,
-        SHGFI_USEFILEATTRIBUTES | SHGFI_SYSICONINDEX);
-    imageList2 = (HIMAGELIST)SHGetFileInfo(
-        _T("Doesn't matter"),
-        FILE_ATTRIBUTE_DIRECTORY,
-        &icon_open, sizeof icon_open,
-        SHGFI_USEFILEATTRIBUTES | SHGFI_SYSICONINDEX | SHGFI_OPENICON);
-
-
-
-    {
-        wxIcon icon;
-        HICON hicon;
-        HIMAGELIST imageList;
-        imageList = (HIMAGELIST)SHGetFileInfo(
-            _T("Doesn't matter"),
-            FILE_ATTRIBUTE_DIRECTORY,
-            &icon_close, sizeof icon_close,
-            SHGFI_USEFILEATTRIBUTES | SHGFI_SYSICONINDEX);
-        IImageList* imageListInterface;
-        HIMAGELIST_QueryInterface(imageList, IID_IImageList, (void**)&imageListInterface);
-        imageListInterface->GetIcon(icon_close.iIcon, 0, &hicon);
-        icon.SetHandle(hicon);
-        icons->Add(icon);
-        DestroyIcon(hicon);
-    }
-    {
-        wxIcon icon;
-        HICON hicon;
-        HIMAGELIST imageList;
-        imageList = (HIMAGELIST)SHGetFileInfo(
-            _T("Doesn't matter"),
-            FILE_ATTRIBUTE_DIRECTORY,
-            &icon_close, sizeof icon_close,
-            SHGFI_USEFILEATTRIBUTES | SHGFI_SYSICONINDEX | SHGFI_OPENICON | SHGFI_LARGEICON);
-        IImageList* imageListInterface;
-        HIMAGELIST_QueryInterface(imageList, IID_IImageList, (void**)&imageListInterface);
-        imageListInterface->GetIcon(icon_open.iIcon, 0, &hicon);
-        icon.SetHandle(hicon);
-        icons->Add(icon);
-        DestroyIcon(hicon);
-    }
+    icons->Add(GetSystemIcon(SystemIcon::FOLDER));
+    icons->Add(GetSystemIcon(SystemIcon::OPEN_FOLDER));
 #else
     icons->Add(folder);
     icons->Add(wxArtProvider::GetBitmap(wxART_FOLDER_OPEN));
