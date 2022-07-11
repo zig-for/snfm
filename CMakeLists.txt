@@ -7,6 +7,13 @@ project(snfm)
 set ( Protobuf_USE_STATIC_LIBS ON )
 find_package(Protobuf REQUIRED)
 find_package(gRPC CONFIG REQUIRED)
+
+# Force wxwidgets to turn off debug build
+set(wxWidgets_USE_DEBUG OFF)
+# Workaround issue where wxwidgets can't find a release only build with the above flag
+message(STATUS "WXWIDGETS DIR "${wxWidgets_LIB_DIR})
+set(wxWidgets_LIB_DIR ${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib)
+message(STATUS "new WXWIDGETS DIR "${wxWidgets_LIB_DIR})
 find_package(wxWidgets REQUIRED COMPONENTS core base)
 
 set(CMAKE_CXX_STANDARD 20)
