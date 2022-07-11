@@ -13,9 +13,14 @@ private:
 
     void OnExit(wxCommandEvent& event);
     void OnAbout(wxCommandEvent& event);
+    void OnResetGame(wxCommandEvent& event);
+    void OnResetToMenu(wxCommandEvent& event);
     wxDECLARE_EVENT_TABLE();
 
+    
+    
     void OnDeviceSelect(wxCommandEvent& event);
+    void SelectDevice(const std::string& uri);
 
     void OnRefreshButton(wxCommandEvent& event);
 
@@ -27,16 +32,24 @@ private:
 
     SNFileTree* treeCtrl_;
     wxComboBox* devicesDropdown_;
+
+    wxMenuItem* resetToMenuButton_;
+    wxMenuItem* resetGameButton_;
 };
 
 enum
 {
-    ID_Hello = 1
+    MenuID_ResetGame = 1,
+    MenuID_ResetToMenu,
+    
 };
 wxBEGIN_EVENT_TABLE(FileManagerFrame, wxFrame)
 
 EVT_MENU(wxID_EXIT, FileManagerFrame::OnExit)
 EVT_MENU(wxID_ABOUT, FileManagerFrame::OnAbout)
+EVT_MENU(MenuID_ResetGame, FileManagerFrame::OnResetGame)
+EVT_MENU(MenuID_ResetToMenu, FileManagerFrame::OnResetToMenu)
+
 wxEND_EVENT_TABLE()
 wxIMPLEMENT_APP(MyApp);
 
@@ -56,18 +69,21 @@ FileManagerFrame::FileManagerFrame(const wxString& title, const wxPoint& pos, co
     : wxFrame(NULL, wxID_ANY, title, pos, size)
 {
     wxMenu* menuFile = new wxMenu;
-    
     menuFile->Append(wxID_EXIT);
+
+    wxMenu* menuDevice = new wxMenu;
+    resetGameButton_ = menuDevice->Append(MenuID_ResetGame, "Reset Game");
+    resetToMenuButton_ = menuDevice->Append(MenuID_ResetToMenu, "Reset to Menu");
+
     wxMenu* menuHelp = new wxMenu;
     menuHelp->Append(wxID_ABOUT);
+
     wxMenuBar* menuBar = new wxMenuBar;
     menuBar->Append(menuFile, "&File");
+    menuBar->Append(menuDevice, "&Device");
     menuBar->Append(menuHelp, "&Help");
     SetMenuBar(menuBar);
     CreateStatusBar();
-
-
-
 
     wxBoxSizer* bigBox = new wxBoxSizer(wxVERTICAL);
 
@@ -130,15 +146,13 @@ void FileManagerFrame::RefreshUris()
     auto device_filter =
         [](const DevicesResponse::Device& device) -> bool
     {
-        auto caps = device.capabilities();
-        return std::find(caps.begin(), caps.end(), DeviceCapability::ReadDirectory) != caps.end();
+        return HasCapability(device, DeviceCapability::ReadDirectory);
     };
     SetStatusText("refreshing devices...");
     sni.refreshDevices(device_filter);
     SetStatusText("devices refreshed");
 
     uris_ = sni.getDeviceUris();
-
 
     bool foundUri = false;
 
@@ -151,23 +165,45 @@ void FileManagerFrame::RefreshUris()
 
     devicesDropdown_->Set(choices);
 
-    if (!foundUri && uris_.size())
+    if (!foundUri)
     {
-        devicesDropdown_->Select(0);
-        current_uri_ = choices[0];
+        std::string uri;
+        if (uris_.size())
+        {
+            devicesDropdown_->Select(0);
+            uri = choices[0];
+        }
+        else
+        {
+            uri = "";
+            devicesDropdown_->Clear();
+        }
+        SelectDevice(uri);
     }
-    else
-    {
-        current_uri_ = "";
-        devicesDropdown_->Clear();
-    }
-
-    treeCtrl_->setUri(current_uri_);
 }
 
 void FileManagerFrame::OnDeviceSelect(wxCommandEvent& event)
 {
-    treeCtrl_->setUri(uris_[event.GetSelection()]);
+    SelectDevice(uris_[event.GetSelection()]);
+}
+
+
+void FileManagerFrame::SelectDevice(const std::string& uri)
+{
+    if (uri != current_uri_)
+    {
+        current_uri_ = uri;
+        treeCtrl_->setUri(uri);
+        
+        auto device = sni.getDevice(uri);
+        if (device)
+        {
+            resetGameButton_->Enable(HasCapability(*device, DeviceCapability::ResetSystem));
+            resetToMenuButton_->Enable(HasCapability(*device, DeviceCapability::ResetToMenu));
+            
+        }
+
+    }
 }
 
 void FileManagerFrame::OnExit(wxCommandEvent& event)
@@ -180,3 +216,11 @@ void FileManagerFrame::OnAbout(wxCommandEvent& event)
         "About SNFM", wxOK | wxICON_INFORMATION);
 }
 
+void FileManagerFrame::OnResetGame(wxCommandEvent& event)
+{
+    sni.resetGame(current_uri_);
+}
+void FileManagerFrame::OnResetToMenu(wxCommandEvent& event)
+{
+    sni.resetToMenu(current_uri_);
+}

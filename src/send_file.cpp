@@ -23,9 +23,9 @@ int main(int argc, char *argv[])
       [](const DevicesResponse::Device &device) -> bool
   {
     auto caps = device.capabilities();
-    return std::find(caps.begin(), caps.end(), DeviceCapability::MakeDirectory) != caps.end() &&
-           std::find(caps.begin(), caps.end(), DeviceCapability::PutFile) != caps.end() &&
-           std::find(caps.begin(), caps.end(), DeviceCapability::BootFile) != caps.end();
+    return HasCapability(device, DeviceCapability::MakeDirectory) &&
+        HasCapability(device, DeviceCapability::PutFile) &&
+        HasCapability(device, DeviceCapability::BootFile);
   };
   std::cout << "refreshing devices" << std::endl;
   sni.refreshDevices(device_filter);
