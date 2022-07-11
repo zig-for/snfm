@@ -19,9 +19,7 @@ static grpc::ChannelArguments GetChannelArgs()
 class SNIConnection
 {
 public:
-    // this needs to be passed in
-    //SNIConnection(const std::string& address = "localhost:8191") // "172.27.16.1:8191"
-    SNIConnection(const std::string& address = "172.27.16.1:8191") // "172.27.16.1:8191"
+    SNIConnection(const std::string& address = "localhost:8191") // "172.27.16.1:8191"
         : channel_{ grpc::CreateCustomChannel(address, grpc::InsecureChannelCredentials(), GetChannelArgs()) }, devices_stub_{ Devices::NewStub(channel_) }, filesystem_stub_{ DeviceFilesystem::NewStub(channel_) }
     {
 
