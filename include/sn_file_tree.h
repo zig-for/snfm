@@ -14,7 +14,7 @@
 #include <wx/treectrl.h>
 #include <wx/dnd.h>
 #include <wx/artprov.h>
-#include "snes.xpm"
+
 
 #include <type_traits>
 #include <wx/busyinfo.h>
@@ -67,7 +67,7 @@ public:
     SNFileTree(wxWindow* parent, const std::string& uri, SNIConnection* sni)
         : parent_window_(parent), uri_(uri), sni_(sni),
         wxTreeCtrl(parent, wxID_ANY,
-            wxDefaultPosition, wxSize(500, 500), wxTR_HAS_BUTTONS | wxTR_TWIST_BUTTONS | wxTR_EDIT_LABELS | wxTR_MULTIPLE)
+            wxDefaultPosition, wxSize(500, 500), wxTR_HAS_BUTTONS | wxTR_TWIST_BUTTONS | wxTR_EDIT_LABELS | wxTR_MULTIPLE | wxTR_NO_LINES)
     {
 #ifdef WIN_DROP_SOURCE
         AfxGetApp()->m_pMainWnd = new CDummyWindow((HWND)wxTheApp->GetTopWindow()->GetHWND());

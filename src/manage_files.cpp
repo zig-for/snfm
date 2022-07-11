@@ -1,4 +1,10 @@
 ﻿#include "sn_file_tree.h"
+#include "manage_files.xpm"
+#include "snes.xpm"
+
+#if WIN32
+#include <CommonControls.h>
+#endif
 
 class MyApp : public wxApp
 {
@@ -68,6 +74,8 @@ bool MyApp::OnInit()
 FileManagerFrame::FileManagerFrame(const wxString& title, const wxPoint& pos, const wxSize& size)
     : wxFrame(NULL, wxID_ANY, title, pos, size)
 {
+    SetIcon(manage_files_xpm);
+
     wxMenu* menuFile = new wxMenu;
     menuFile->Append(wxID_EXIT);
 
@@ -98,7 +106,6 @@ FileManagerFrame::FileManagerFrame(const wxString& title, const wxPoint& pos, co
 
     devicesDropdown_ = new wxComboBox(this, wxID_ANY, "", wxDefaultPosition, wxSize(2500, 25), {}, wxCB_READONLY);
 
-
     refreshBox->Add(devicesDropdown_, 1, wxEXPAND);
 
     refreshBox->Add(button);
@@ -113,10 +120,62 @@ FileManagerFrame::FileManagerFrame(const wxString& title, const wxPoint& pos, co
     wxBitmap folder = wxArtProvider::GetBitmap(wxART_FOLDER);
 
     wxImageList* icons = new wxImageList(folder.GetWidth(), folder.GetHeight(), false, 4);
-    icons->Add(folder);
-    icons->Add(wxArtProvider::GetBitmap(wxART_FOLDER_OPEN)); // please don't ask me why this is needed twice, i dont know
-    icons->Add(wxArtProvider::GetBitmap(wxART_NORMAL_FILE));
+#if WIN32
+    SHFILEINFO icon_close = {};
+    SHFILEINFO icon_open = {};
 
+    HIMAGELIST imageList;
+    HIMAGELIST imageList2;
+    imageList = (HIMAGELIST)SHGetFileInfo(
+        _T("Doesn't matter"),
+        FILE_ATTRIBUTE_DIRECTORY,
+        &icon_close, sizeof icon_close,
+        SHGFI_USEFILEATTRIBUTES | SHGFI_SYSICONINDEX);
+    imageList2 = (HIMAGELIST)SHGetFileInfo(
+        _T("Doesn't matter"),
+        FILE_ATTRIBUTE_DIRECTORY,
+        &icon_open, sizeof icon_open,
+        SHGFI_USEFILEATTRIBUTES | SHGFI_SYSICONINDEX | SHGFI_OPENICON);
+
+
+
+    {
+        wxIcon icon;
+        HICON hicon;
+        HIMAGELIST imageList;
+        imageList = (HIMAGELIST)SHGetFileInfo(
+            _T("Doesn't matter"),
+            FILE_ATTRIBUTE_DIRECTORY,
+            &icon_close, sizeof icon_close,
+            SHGFI_USEFILEATTRIBUTES | SHGFI_SYSICONINDEX);
+        IImageList* imageListInterface;
+        HIMAGELIST_QueryInterface(imageList, IID_IImageList, (void**)&imageListInterface);
+        imageListInterface->GetIcon(icon_close.iIcon, 0, &hicon);
+        icon.SetHandle(hicon);
+        icons->Add(icon);
+        DestroyIcon(hicon);
+    }
+    {
+        wxIcon icon;
+        HICON hicon;
+        HIMAGELIST imageList;
+        imageList = (HIMAGELIST)SHGetFileInfo(
+            _T("Doesn't matter"),
+            FILE_ATTRIBUTE_DIRECTORY,
+            &icon_close, sizeof icon_close,
+            SHGFI_USEFILEATTRIBUTES | SHGFI_SYSICONINDEX | SHGFI_OPENICON | SHGFI_LARGEICON);
+        IImageList* imageListInterface;
+        HIMAGELIST_QueryInterface(imageList, IID_IImageList, (void**)&imageListInterface);
+        imageListInterface->GetIcon(icon_open.iIcon, 0, &hicon);
+        icon.SetHandle(hicon);
+        icons->Add(icon);
+        DestroyIcon(hicon);
+    }
+#else
+    icons->Add(folder);
+    icons->Add(wxArtProvider::GetBitmap(wxART_FOLDER_OPEN));
+#endif
+    icons->Add(wxArtProvider::GetBitmap(wxART_NORMAL_FILE));
     wxBitmap snes_icon = wxBitmap(snes_xpm);
     wxBitmap::Rescale(snes_icon, folder.GetSize());
     icons->Add(snes_icon);

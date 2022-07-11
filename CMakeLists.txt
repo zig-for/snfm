@@ -12,13 +12,14 @@ find_package(gRPC CONFIG REQUIRED)
 set(wxWidgets_USE_DEBUG OFF)
 # Workaround issue where wxwidgets can't find a release only build with the above flag
 message(STATUS "WXWIDGETS DIR "${wxWidgets_LIB_DIR})
+IF(CMAKE_BUILD_TYPE MATCHES "Release")
 set(wxWidgets_LIB_DIR ${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib)
+endif()
 message(STATUS "new WXWIDGETS DIR "${wxWidgets_LIB_DIR})
 find_package(wxWidgets REQUIRED COMPONENTS core base)
 
 set(CMAKE_CXX_STANDARD 20)
 find_program(GRPC_CPP_PLUGIN grpc_cpp_plugin) # Get full path to plugin
-
 
 function(PROTOBUF_GENERATE_GRPC_CPP SRCS HDRS)
   if(NOT ARGN)
