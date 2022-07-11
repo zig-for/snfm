@@ -21,7 +21,6 @@ jobs:
       - run: mkdir C:/lukka-vcpkg
       # Install latest CMake.
       - uses: lukka/get-cmake@latest
-      - run: copy ${{ github.workspace }}/x64-windows-release.cmake C:/lukka-vcpkg/triplets/community
       - name: Restore artifacts, or setup vcpkg (do not install any package)
         uses: lukka/run-vcpkg@v10
         with:

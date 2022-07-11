@@ -15,9 +15,10 @@
           "value": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
           "type": "FILEPATH"
         },
-        "VCPKG_TARGET_TRIPLET": "x64-windows-static-release",
-        "VCPKG_OVERLAY_TRIPLES": "${sourceDir}",
-        "VCPKG_BUILD_TYPE": "release"
+        "VCPKG_TARGET_TRIPLET": "x64-windows-static-release"
+      },
+      "environment": {
+        "VCPKG_OVERLAY_TRIPLETS": "${sourceDir}/triplets"
       },
       "condition": {
         "type": "equals",
