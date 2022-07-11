@@ -12,7 +12,3 @@
 ## Linux/MacOS instructions
 
 The same, but install the dependencies through git/apt. Good luck.
-
-## Known issue:
-
-Outputting files appends junk on the end. :)
