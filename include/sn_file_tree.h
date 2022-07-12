@@ -104,6 +104,7 @@ public:
         Bind(wxEVT_LEAVE_WINDOW, &SNFileTree::MouseLeave, this);
 
         parent->DragAcceptFiles(true);
+        parent->SetDropTarget(this);
         parent->Connect(wxEVT_DROP_FILES, wxDropFilesEventHandler(SNFileTree::OnDropFiles2), NULL, this);
 
 
@@ -475,6 +476,13 @@ private:
         const wxArrayString& filenames
     ) override;
 
+    virtual wxDragResult OnDragOver(wxCoord 	x,
+        wxCoord 	y,
+        wxDragResult 	defResult
+    ) override;
+    wxTreeItemId HitTestFromGlobal(wxPoint point, int mask = wxTREE_HITTEST_ONITEMBUTTON | wxTREE_HITTEST_ONITEMICON | wxTREE_HITTEST_ONITEMLABEL | wxTREE_HITTEST_ONITEMRIGHT) const;
+
+
     SNIConnection* sni_ = nullptr;
     std::string uri_;
     wxMenu* dir_menu_;
@@ -484,7 +492,7 @@ private:
     //wxTreeItemId start_drag_item_;
     std::vector<wxTreeItemId> start_drag_items_;
     bool in_tree_drag_ = false;
-
+    wxTreeItemId last_dnd_highlight_;
 };
 
 
