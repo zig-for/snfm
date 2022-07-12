@@ -82,7 +82,9 @@ FileManagerFrame::FileManagerFrame(const wxString& title, const wxPoint& pos, co
     resetToMenuButton_->SetBitmap(GetSystemIcon(SystemIcon::RESET_TO_MENU));;
 
     wxMenu* menuHelp = new wxMenu;
-    menuHelp->Append(wxID_ABOUT)->SetBitmap(GetSystemIcon(SystemIcon::QUESTION  ));
+
+    menuHelp->Append(wxID_ABOUT)->SetBitmap(GetSystemIcon(SystemIcon::QUESTION));
+
 
     wxMenuBar* menuBar = new wxMenuBar;
     menuBar->Append(menuFile, "&File");
