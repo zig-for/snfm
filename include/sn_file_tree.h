@@ -14,8 +14,8 @@
 #include <wx/treectrl.h>
 #include <wx/dnd.h>
 #include <wx/artprov.h>
-#include "snes.xpm"
 
+#include "icons.h"
 #include <type_traits>
 #include <wx/busyinfo.h>
 #define PROTECT_SYSTEM_FOLDERS(fileId) if (GetRootItem() == fileId || GetItemText(fileId) == "/" || (GetItemText(fileId) == "sd2snes" && GetItemParent(fileId) == GetRootItem())){ return false; }
@@ -67,7 +67,7 @@ public:
     SNFileTree(wxWindow* parent, const std::string& uri, SNIConnection* sni)
         : parent_window_(parent), uri_(uri), sni_(sni),
         wxTreeCtrl(parent, wxID_ANY,
-            wxDefaultPosition, wxSize(500, 500), wxTR_HAS_BUTTONS | wxTR_TWIST_BUTTONS | wxTR_EDIT_LABELS | wxTR_MULTIPLE)
+            wxDefaultPosition, wxSize(500, 500), wxTR_HAS_BUTTONS | wxTR_TWIST_BUTTONS | wxTR_EDIT_LABELS | wxTR_MULTIPLE | wxTR_NO_LINES)
     {
 #ifdef WIN_DROP_SOURCE
         AfxGetApp()->m_pMainWnd = new CDummyWindow((HWND)wxTheApp->GetTopWindow()->GetHWND());
@@ -83,12 +83,20 @@ public:
         Bind(wxEVT_TREE_SEL_CHANGING, &SNFileTree::OnSelect, this);
 
         dir_menu_ = new wxMenu();
-        dir_menu_->Append(SNIMenuItem_Run, "Run");
-        dir_menu_->Append(SNIMenuItem_Rename, "Rename");
-        dir_menu_->Append(SNIMenuItem_Refresh, "Refresh");
-        dir_menu_->Append(SNIMenuItem_CreateDirectory, "Create Directory");
-        dir_menu_->Append(SNIMenuItem_Import, "Import...");
-        dir_menu_->Append(SNIMenuItem_Export, "Export...");
+        dir_menu_->Append(SNIMenuItem_Run, "Run")->SetBitmap(GetSystemIcon(SystemIcon::EXECUTE));
+        dir_menu_->Append(SNIMenuItem_Rename, "Rename")->SetBitmap(GetSystemIcon(SystemIcon::RENAME));
+        dir_menu_->Append(SNIMenuItem_Refresh, "Refresh")->SetBitmap(GetSystemIcon(SystemIcon::REFRESH));
+        dir_menu_->Append(SNIMenuItem_CreateDirectory, "Create Directory")->SetBitmap(GetSystemIcon(SystemIcon::FOLDER));;
+        
+        wxIcon exportIcon = GetSystemIcon(SystemIcon::EXPORT);
+        wxImage importIcon;
+#if WIN32
+        importIcon = wxBitmap(exportIcon).ConvertToImage();
+        importIcon = importIcon.Mirror(false);
+        importIcon.RotateHue(0.66);
+#endif
+        dir_menu_->Append(SNIMenuItem_Import, "Import...")->SetBitmap(exportIcon);
+        dir_menu_->Append(SNIMenuItem_Export, "Export...")->SetBitmap(importIcon);
 
         Bind(wxEVT_COMMAND_MENU_SELECTED, &SNFileTree::OnContextMenuSelected, this);
 

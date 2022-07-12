@@ -1,5 +1,7 @@
 ﻿#include "sn_file_tree.h"
-
+#include "manage_files.xpm"
+#include "snes.xpm"
+#include "icons.h"
 class MyApp : public wxApp
 {
 public:
@@ -64,19 +66,25 @@ bool MyApp::OnInit()
     return true;
 }
 
-
 FileManagerFrame::FileManagerFrame(const wxString& title, const wxPoint& pos, const wxSize& size)
     : wxFrame(NULL, wxID_ANY, title, pos, size)
 {
+
+    SetIcon(manage_files_xpm);
+
     wxMenu* menuFile = new wxMenu;
     menuFile->Append(wxID_EXIT);
 
     wxMenu* menuDevice = new wxMenu;
     resetGameButton_ = menuDevice->Append(MenuID_ResetGame, "Reset Game");
+    resetGameButton_->SetBitmap(GetSystemIcon(SystemIcon::RESET_GAME));;
     resetToMenuButton_ = menuDevice->Append(MenuID_ResetToMenu, "Reset to Menu");
+    resetToMenuButton_->SetBitmap(GetSystemIcon(SystemIcon::RESET_TO_MENU));;
 
     wxMenu* menuHelp = new wxMenu;
-    menuHelp->Append(wxID_ABOUT);
+
+    menuHelp->Append(wxID_ABOUT)->SetBitmap(GetSystemIcon(SystemIcon::QUESTION));
+
 
     wxMenuBar* menuBar = new wxMenuBar;
     menuBar->Append(menuFile, "&File");
@@ -98,7 +106,6 @@ FileManagerFrame::FileManagerFrame(const wxString& title, const wxPoint& pos, co
 
     devicesDropdown_ = new wxComboBox(this, wxID_ANY, "", wxDefaultPosition, wxSize(2500, 25), {}, wxCB_READONLY);
 
-
     refreshBox->Add(devicesDropdown_, 1, wxEXPAND);
 
     refreshBox->Add(button);
@@ -113,10 +120,15 @@ FileManagerFrame::FileManagerFrame(const wxString& title, const wxPoint& pos, co
     wxBitmap folder = wxArtProvider::GetBitmap(wxART_FOLDER);
 
     wxImageList* icons = new wxImageList(folder.GetWidth(), folder.GetHeight(), false, 4);
+    
+#if WIN32
+    icons->Add(GetSystemIcon(SystemIcon::FOLDER));
+    icons->Add(GetSystemIcon(SystemIcon::OPEN_FOLDER));
+#else
     icons->Add(folder);
-    icons->Add(wxArtProvider::GetBitmap(wxART_FOLDER_OPEN)); // please don't ask me why this is needed twice, i dont know
+    icons->Add(wxArtProvider::GetBitmap(wxART_FOLDER_OPEN));
+#endif
     icons->Add(wxArtProvider::GetBitmap(wxART_NORMAL_FILE));
-
     wxBitmap snes_icon = wxBitmap(snes_xpm);
     wxBitmap::Rescale(snes_icon, folder.GetSize());
     icons->Add(snes_icon);
