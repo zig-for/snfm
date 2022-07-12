@@ -197,19 +197,45 @@ void SNFileTree::OnLabelEdit(wxTreeEvent& event)
     }
 }
 
-bool SNFileTree::OnDropFiles(wxCoord x, wxCoord y, const wxArrayString& filenames)
+wxTreeItemId SNFileTree::HitTestFromGlobal(wxPoint point, int mask) const
 {
-    int mask = wxTREE_HITTEST_ONITEMBUTTON | wxTREE_HITTEST_ONITEMICON | wxTREE_HITTEST_ONITEMLABEL | wxTREE_HITTEST_ONITEMRIGHT;
     int flags = 0;
-    wxPoint point{ x,y };
     point -= GetPosition();
     wxTreeItemId hit = HitTest(point, flags);
 
     if ((flags & mask) && hit.IsOk())
+    {
+        return hit;
+    }
+    return {};
+}
+
+bool SNFileTree::OnDropFiles(wxCoord x, wxCoord y, const wxArrayString& filenames)
+{
+    wxTreeItemId hit = HitTestFromGlobal({ x, y });
+
+    if (hit.IsOk())
     {
         ImportFilesTo(hit, filenames);
         return true;
     }
 
     return false;
+}
+
+wxDragResult SNFileTree::OnDragOver(wxCoord 	x,
+    wxCoord 	y,
+    wxDragResult 	defResult
+) 
+{
+    wxTreeItemId hit = HitTestFromGlobal({ x, y });
+
+    SetItemDropHighlight(last_dnd_highlight_, false);
+    last_dnd_highlight_ = hit;
+    if (hit.IsOk())
+    {
+        SetItemDropHighlight(hit);
+    }
+
+    return defResult;
 }
