@@ -77,7 +77,9 @@ FileManagerFrame::FileManagerFrame(const wxString& title, const wxPoint& pos, co
 
     wxMenu* menuDevice = new wxMenu;
     resetGameButton_ = menuDevice->Append(MenuID_ResetGame, "Reset Game");
+    resetGameButton_->SetBitmap(GetSystemIcon(SystemIcon::RESET_GAME));;
     resetToMenuButton_ = menuDevice->Append(MenuID_ResetToMenu, "Reset to Menu");
+    resetToMenuButton_->SetBitmap(GetSystemIcon(SystemIcon::RESET_TO_MENU));;
 
     wxMenu* menuHelp = new wxMenu;
     menuHelp->Append(wxID_ABOUT)->SetBitmap(GetSystemIcon(SystemIcon::QUESTION  ));
