@@ -114,7 +114,7 @@ void SNFileTree::refreshFolder(wxTreeItemId folderId)
 
         std::string name = entry.name();
 #ifdef EXTENDED_LS_ATTRS
-        if (entry.type() == DirEntryType::File)
+        if (entry.type() == DirEntryType::File && entry.has_size())
         {
             name += " (" + formatSize(entry.size()) + ")";
         }
