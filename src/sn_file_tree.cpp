@@ -78,7 +78,6 @@ void SNFileTree::refreshFolder(wxTreeItemId folderId)
 
     std::unordered_map<wxString, wxTreeItemId> nodes;
 
-
     wxTreeItemIdValue cookie;
     wxTreeItemId childId = GetFirstChild(folderId, cookie);
     if (childId.IsOk() && isPlaceHolder(childId))
@@ -86,7 +85,6 @@ void SNFileTree::refreshFolder(wxTreeItemId folderId)
         DeleteChildren(folderId);
         childId.Unset();
     }
-
 
     while (childId.IsOk())
     {
