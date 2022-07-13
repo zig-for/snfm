@@ -1,5 +1,11 @@
 ﻿#include "sn_file_tree.h"
 
+SNFileTreeItemData* SNFileTree::getEntry(wxTreeItemId id)
+{
+    return static_cast<SNFileTreeItemData*>(GetItemData(id));
+}
+
+
 wxIMPLEMENT_DYNAMIC_CLASS(SNFileTree, wxTreeCtrl);
 void SNFileTree::setUri(const std::string& uri)
 {
@@ -39,14 +45,27 @@ std::filesystem::path SNFileTree::constructPath(wxTreeItemId folder, wxTreeItemI
 
     if (folder == rootItem || !parent.IsOk())
     {
-        return std::filesystem::path(GetItemText(rootItem).ToStdString(), std::filesystem::path::generic_format);
+        auto* entry = getEntry(folder);
+        // Support "fake" items
+        std::string name = entry ? entry->name() : GetItemText(folder).ToStdString();
+        return std::filesystem::path(name, std::filesystem::path::generic_format);
     }
-    return constructPath(parent, rootItem) / GetItemText(folder).ToStdString();
+    return constructPath(parent, rootItem) / getEntry(folder)->name();
 }
 
 bool SNFileTree::isPlaceHolder(wxTreeItemId id)
 {
-    return GetItemText(id) == "..." || GetItemText(id) == "(empty)";
+    return getEntry(id) == nullptr;
+}
+
+std::string formatSize(uint32_t size)
+{
+#ifdef WIN32
+    char buf[32];
+    return StrFormatByteSizeA(size, buf, 32);
+#else
+    return std::to_string(size / 1024) + "B";
+#endif
 }
 
 void SNFileTree::refreshFolder(wxTreeItemId folderId)
@@ -71,7 +90,7 @@ void SNFileTree::refreshFolder(wxTreeItemId folderId)
 
     while (childId.IsOk())
     {
-        nodes[GetItemText(childId)] = childId;
+        nodes[getEntry(childId)->name()] = childId;
         childId = GetNextChild(folderId, cookie);
     }
     std::string full_path = constructPath(folderId).generic_string();
@@ -93,7 +112,15 @@ void SNFileTree::refreshFolder(wxTreeItemId folderId)
             continue;
         }
 
-        auto nodeId = AppendItem(folderId, entry.name());
+        std::string name = entry.name();
+#ifdef EXTENDED_LS_ATTRS
+        if (entry.type() == DirEntryType::File)
+        {
+            name += " (" + formatSize(entry.size()) + ")";
+        }
+#endif
+
+        auto nodeId = AppendItem(folderId, name, -1, -1, new SNFileTreeItemData(entry));
         if (entry.type() == DirEntryType::Directory)
         {
             SetItemImage(nodeId, SNIcon_FOLDER_CLOSE);
@@ -145,7 +172,10 @@ bool SNFileTree::requestDelete(wxTreeItemId fileId, bool top /*= true*/)
     std::string full_path = constructPath(fileId).generic_string();
 
     // S A F E T Y
-    PROTECT_SYSTEM_FOLDERS(fileId);
+    if (isProtectedSystemData(fileId))
+    {
+        return false;
+    }
 
     if (HasChildren(fileId))
     {
@@ -197,7 +227,7 @@ wxTreeItemId SNFileTree::showNameUnder(wxTreeItemId folder, const std::string na
     wxTreeItemId childId = GetFirstChild(folder, cookie);
     while (childId.IsOk())
     {
-        if (GetItemText(childId) == name)
+        if (getEntry(childId)->name() == name)
         {
             EnsureVisible(childId);
             break;
@@ -237,14 +267,18 @@ wxTreeItemId SNFileTree::parentDirIfNotDir(wxTreeItemId id)
 
 bool SNFileTree::moveToFolder(wxTreeItemId from, wxTreeItemId to)
 {
-    PROTECT_SYSTEM_FOLDERS(from);
+    if (isProtectedSystemData(from))
+    {
+        return false;
+    }
+
     to = parentDirIfNotDir(to);
     if (!to.IsOk())
     {
         // this happens if you move stuff around enough? something is out of sync
         return false;
     }
-    std::string file_name = GetItemText(from).ToStdString();
+    std::string file_name = getEntry(from)->name();
     std::filesystem::path to_path = constructPath(to) / file_name;
 
     if (sni_->renameFile(uri_, constructPath(from), to_path))
@@ -262,9 +296,12 @@ bool SNFileTree::moveToFolder(wxTreeItemId from, wxTreeItemId to)
 
 bool SNFileTree::rename(wxTreeItemId file, const std::string& name)
 {
-    PROTECT_SYSTEM_FOLDERS(file);
+    if (isProtectedSystemData(file))
+    {
+        return false;
+    }
 
-    if (GetItemText(file) == name)
+    if (getEntry(file)->name() == name)
     {
         return false;
     }

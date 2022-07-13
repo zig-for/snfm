@@ -40,7 +40,7 @@ void SNFileTree::OnTreeDragEnd(wxTreeEvent& event)
 
             if (from.IsOk())
             {
-                file_names.push_back(GetItemText(from).ToStdString());
+                file_names.push_back(getEntry(from)->name());
 
                 if (!isAncestor(from, to))
                 {
@@ -129,7 +129,7 @@ void SNFileTree::OnContextMenuSelected(wxCommandEvent& event)
     {
         auto selected_item = GetFocusedItem();
         bool has_children = ItemHasChildren(selected_item);
-        wxFileDialog openFileDialog(this, _("Export to..."), "", GetItemText(selected_item), has_children ? L"All Files (*.*)|*.*" : FILETYPES, wxFD_SAVE);
+        wxFileDialog openFileDialog(this, _("Export to..."), "", getEntry(selected_item)->name(), has_children ? L"All Files (*.*)|*.*" : FILETYPES, wxFD_SAVE);
 
         if (openFileDialog.ShowModal() == wxID_CANCEL)
         {

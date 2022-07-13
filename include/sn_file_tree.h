@@ -3,6 +3,9 @@
 #define WIN_DROP_SOURCE
 #endif
 #ifdef WIN_DROP_SOURCE
+
+#define EXTENDED_LS_ATTRS
+
 #include "win_dnd.h"
 #endif
 
@@ -18,7 +21,22 @@
 #include "icons.h"
 #include <type_traits>
 #include <wx/busyinfo.h>
-#define PROTECT_SYSTEM_FOLDERS(fileId) if (GetRootItem() == fileId || GetItemText(fileId) == "/" || (GetItemText(fileId) == "sd2snes" && GetItemParent(fileId) == GetRootItem())){ return false; }
+
+
+struct SNFileTreeItemData : public wxTreeItemData
+{
+    SNFileTreeItemData() {}
+    SNFileTreeItemData(const DirEntry& entry)
+        : entry{ entry }
+    {
+
+    }
+    std::string name()
+    {
+        return entry.name();
+    }
+    DirEntry entry;
+};
 
 class SNFileTree : public wxTreeCtrl, wxFileDropTarget
 {
@@ -46,7 +64,7 @@ class SNFileTree : public wxTreeCtrl, wxFileDropTarget
 public:
     wxWindow* parent_window_;
 
-    
+
 
     template <typename F>
     auto CommunicateWithDevice(const std::string& msg, F f)
@@ -87,7 +105,7 @@ public:
         dir_menu_->Append(SNIMenuItem_Rename, "Rename")->SetBitmap(GetSystemIcon(SystemIcon::RENAME));
         dir_menu_->Append(SNIMenuItem_Refresh, "Refresh")->SetBitmap(GetSystemIcon(SystemIcon::REFRESH));
         dir_menu_->Append(SNIMenuItem_CreateDirectory, "Create Directory")->SetBitmap(GetSystemIcon(SystemIcon::FOLDER));;
-        
+
         wxIcon exportIcon = GetSystemIcon(SystemIcon::EXPORT);
         wxImage importIcon;
 #if WIN32
@@ -109,6 +127,21 @@ public:
 
 
     }
+    bool isProtectedSystemData(wxTreeItemId fileId) {
+
+        if (GetRootItem() == fileId)
+        {
+            return true;
+        }
+        SNFileTreeItemData* entry = getEntry(fileId);
+        if (!entry)
+        {
+            return false;
+        }
+        return entry->name() == "/" || (GetItemParent(fileId) == GetRootItem() && entry->name() == "sd2snes");
+    }
+
+
     void OnDropFiles2(wxDropFilesEvent& event)
     {
         wxArrayString files(event.GetNumberOfFiles(), event.GetFiles());
@@ -144,6 +177,8 @@ public:
     bool moveToFolder(wxTreeItemId from, wxTreeItemId to);
 
     bool rename(wxTreeItemId file, const std::string& name);
+
+    SNFileTreeItemData* getEntry(wxTreeItemId id);
 private:
 
     void OnSelect(wxTreeEvent& event);
@@ -171,7 +206,7 @@ private:
 #else
             strcasecmp
 #endif
-            (GetItemText(a).c_str(), GetItemText(b).c_str());
+            (getEntry(a)->name().c_str(), getEntry(b)->name().c_str());
         if (c)
         {
             return c;
@@ -182,9 +217,9 @@ private:
     void OnRightClick(wxTreeEvent& event)
     {
         bool has_children = HasChildren(event.GetItem());
-        
+
         dir_menu_->Enable(SNIMenuItem_Run, !has_children);
-        
+
         PopupMenu(dir_menu_);
 
     }
@@ -198,7 +233,7 @@ public:
         return hit;
     }
 private:
-    
+
 
     void RecursiveChildren(wxTreeItemId item, std::vector<wxTreeItemId>* out, bool allow_parents, bool refresh = true)
     {
@@ -207,7 +242,7 @@ private:
         {
             wxTreeItemIdValue cookie;
             wxTreeItemId childId = GetFirstChild(item, cookie);
-            if (GetItemText(childId) == "...")
+            if (isPlaceHolder(childId))
             {
                 refreshFolder(item);
             }
@@ -449,8 +484,8 @@ private:
 
             std::filesystem::path relative_path = device_folder / std::filesystem::relative(file, dir.parent_path()).parent_path();
             MkDirP(relative_path);
-            
-            auto result = sni_->putFile(uri_, file,relative_path);
+
+            auto result = sni_->putFile(uri_, file, relative_path);
             if (result.has_value())
             {
                 successful_files.push_back(*result);
