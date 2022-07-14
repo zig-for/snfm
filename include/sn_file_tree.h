@@ -4,7 +4,7 @@
 #endif
 #ifdef WIN_DROP_SOURCE
 
-#define EXTENDED_LS_ATTRS
+//#define EXTENDED_LS_ATTRS
 
 #include "win_dnd.h"
 #endif
@@ -122,11 +122,13 @@ public:
         Bind(wxEVT_LEAVE_WINDOW, &SNFileTree::MouseLeave, this);
 
         parent->DragAcceptFiles(true);
-        parent->SetDropTarget(this);
+        //parent->SetDropTarget(this);
         parent->Connect(wxEVT_DROP_FILES, wxDropFilesEventHandler(SNFileTree::OnDropFiles2), NULL, this);
 
 
     }
+
+
     bool isProtectedSystemData(wxTreeItemId fileId) {
 
         if (GetRootItem() == fileId)
@@ -149,6 +151,8 @@ public:
     }
     ~SNFileTree()
     {
+        //parent_window_->SetDropTarget(nullptr);
+
     }
 
     void setUri(const std::string& uri);
@@ -372,7 +376,7 @@ private:
         // immediately
         FORMATETC etcDescriptor = {
             (CLIPFORMAT)RegisterClipboardFormat(CFSTR_FILEDESCRIPTOR),
-            NULL, DVASPECT_CONTENT, -1, TYMED_ISTREAM | TYMED_FILE };
+            NULL, DVASPECT_CONTENT, -1, TYMED_FILE };
         SNIAfxDropSource* dataSource = new SNIAfxDropSource(
             std::move(device_filenames),
             [this](const std::string& path)
@@ -391,7 +395,7 @@ private:
         // device, like an FTP site, an add-on device, or an archive
         FORMATETC etcContents = {
             (CLIPFORMAT)RegisterClipboardFormat(CFSTR_FILECONTENTS),
-            NULL, DVASPECT_CONTENT, -1, TYMED_ISTREAM };
+            NULL, DVASPECT_CONTENT, -1, TYMED_FILE };
         dataSource->DelayRenderFileData(RegisterClipboardFormat(
             CFSTR_FILECONTENTS), &etcContents);
 

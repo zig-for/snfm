@@ -28,6 +28,7 @@ public:
         , devices_stub_{ Devices::NewStub(channel_) }
         , filesystem_stub_{ DeviceFilesystem::NewStub(channel_) }
         , device_stub_{DeviceControl::NewStub(channel_)}
+        , device_memory_stub_{ DeviceMemory::NewStub(channel_) }
     {
 
     }
@@ -250,12 +251,71 @@ public:
         grpc::ClientContext context;
         device_stub_->ResetSystem(&context, request, &response);
     }
+
+    MemoryMapping detectMapping(const std::string& uri)
+    {
+        DetectMemoryMappingRequest request;
+        request.set_uri(uri);
+        DetectMemoryMappingResponse response;
+        grpc::ClientContext context;
+        device_memory_stub_->MappingDetect(&context, request, &response);
+        return response.memorymapping();
+    }
+
+    std::vector<std::byte> readMemory(const std::string& uri, AddressSpace address_space, uint32_t address, uint32_t size, MemoryMapping mapping = MemoryMapping::Unknown)
+    {
+        SingleReadMemoryRequest request;
+        request.set_uri(uri);
+        request.mutable_request()->set_requestaddressspace(address_space);
+        request.mutable_request()->set_requestaddress(address);
+        request.mutable_request()->set_size(size);
+        request.mutable_request()->set_requestmemorymapping(mapping);
+        SingleReadMemoryResponse response;
+        grpc::ClientContext context;
+        device_memory_stub_->SingleRead(&context, request, &response);
+        const std::string& data = response.response().data();
+        std::vector<std::byte> bytes;
+        bytes.reserve(data.size());
+        std::transform(std::begin(data), std::end(data), std::back_inserter(bytes), [](char c) {
+            return std::byte(c);
+            });
+        return bytes;
+    }
+
+    std::vector<std::byte> readControllerState(const std::string& uri, MemoryMapping mapping = MemoryMapping::Unknown)
+    {
+        return readMemory(uri, AddressSpace::FxPakPro, 0xF50000 + 0xDA2, 8, mapping);
+    }
+    void writeMemory(const std::string& uri, AddressSpace address_space, uint32_t address, const std::vector<std::byte>& data, MemoryMapping mapping = MemoryMapping::Unknown)
+    {
+        SingleWriteMemoryRequest request;
+        request.set_uri(uri);
+        request.mutable_request()->set_requestaddressspace(address_space);
+        request.mutable_request()->set_requestaddress(address);
+
+        std::string s;
+        s.resize(data.size());
+        for (int i = 0; i < data.size(); i++)
+        {
+            s[i] = char(data[i]);
+        }
+        request.mutable_request()->set_data(s);
+        request.mutable_request()->set_requestmemorymapping(mapping);
+        SingleWriteMemoryResponse response;
+        grpc::ClientContext context;
+        device_memory_stub_->SingleWrite(&context, request, &response);
+        
+        return;
+    }
+
+
 private:
     std::shared_ptr<grpc::Channel> channel_;
     std::unique_ptr<Devices::Stub> devices_stub_;
 
     std::unique_ptr<DeviceFilesystem::Stub> filesystem_stub_;
     std::unique_ptr<DeviceControl::Stub> device_stub_;
+    std::unique_ptr<DeviceMemory::Stub> device_memory_stub_;
 
 
     std::vector<DevicesResponse::Device> devices_;
