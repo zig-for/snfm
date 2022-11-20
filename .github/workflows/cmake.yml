@@ -16,9 +16,9 @@ jobs:
     strategy:
       matrix:
         config:
-          - { os: windows-latest, name: macos-latest, vcpkg-dir: 'C:/lukka-vcpkg' }
-          - { os: ubuntu-latest, name: ubuntu-latest, vcpkg-dir: '/tmp/lukka-vcpkg' }
-          - { os: macos-latest, name: windows-latest, vcpkg-dir: '/tmp/lukka-vcpkg' }
+          - { os: windows-latest, preset: windows-x64-release, vcpkg-dir: 'C:/lukka-vcpkg' }
+          - { os: ubuntu-latest, preset: ubuntu-x64-release, vcpkg-dir: '/tmp/lukka-vcpkg' }
+          - { os: macos-latest, preset: macos-x64-release, vcpkg-dir: '/tmp/lukka-vcpkg' }
     runs-on: ${{ matrix.config.os }}
     continue-on-error: true
     steps:
@@ -62,18 +62,17 @@ jobs:
           
           # TODO: this probably won't work on linux, lol'
           
-          configurePreset: 'windows-x64-release'
+          configurePreset: '${{ matrix.config.preset }}'
 
           # This is the name of the CMakePresets.json's configuration to build the project.
-          buildPreset: 'windows-x64-release'
+          buildPreset: '${{ matrix.config.preset }}'
       - run: ls out/build
       - name: Archive build
         uses: actions/upload-artifact@v3
         with:
-          name: snfm
+          name: snfm-${{ matrix.config.preset }}
           path: |
-            out/build/windows-x64-release/*.exe
-            out/build/windows-x64-release/*.dll
+            out/build/${{ matrix.config.preset }}/*
   release:
     if: github.event_name == 'release'
     runs-on: windows-latest
@@ -84,17 +83,54 @@ jobs:
       - name: Get artifact
         uses: actions/download-artifact@v2
         with:
-          name: snfm
+          name: snfm-windows-x64-release
+          path: windows
+      - name: Get artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: snfm-linux-x64-release
+          path: linux
+      - name: Get artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: snfm-macos-x64-release
+          path: macos
       - name: Archive Release
         uses: thedoctor0/zip-release@main
         with:
           type: zip
-          filename: snfm-win64.zip
-          path: .
+          filename: snfm-windows-x64-release.zip
+          path: windows
+      - name: Archive Release
+        uses: thedoctor0/zip-release@main
+        with:
+          type: zip
+          filename: snfm-linux-x64-release.zip
+          path: linux
+      - name: Archive Release
+        uses: thedoctor0/zip-release@main
+        with:
+          type: zip
+          filename: snfm-macos-x64-release.zip
+          path: macos
       - name: Upload binaries to release
         uses: svenstaro/upload-release-action@v2
         with:
           tag: ${{ env.GITHUB_REF_SLUG }}
           overwrite: true
-          asset_name: snfm-win64.zip
-          file: snfm-win64.zip
+          asset_name: snfm-windows-x64-release.zip
+          file: snfm-windows-x64-release.zip
+      - name: Upload binaries to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          tag: ${{ env.GITHUB_REF_SLUG }}
+          overwrite: true
+          asset_name: snfm-linux-x64-release.zip
+          file: snfm-linux-x64-release.zip
+      - name: Upload binaries to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          tag: ${{ env.GITHUB_REF_SLUG }}
+          overwrite: true
+          asset_name: snfm-macos-x64-release.zip
+          file: snfm-macos-x64-release.zip
