@@ -13,18 +13,21 @@ env:
   BUILD_TYPE: Release
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: 
+      - windows-latest
+      - ubuntu-latest
+      - macos-latest
     steps:
       - uses: actions/checkout@v2
         with:
           submodules: true
-      - run: mkdir C:/lukka-vcpkg
+      - run: mkdir ${{ env.RUNNER_TEMP }}/lukka-vcpkg
       # Install latest CMake.
       - uses: lukka/get-cmake@latest
       - name: Restore artifacts, or setup vcpkg (do not install any package)
         uses: lukka/run-vcpkg@v10
         with:
-          vcpkgDirectory: 'C:/lukka-vcpkg'
+          vcpkgDirectory: '${{env.RUNNER_TEMP }}/lukka-vcpkg'
           # If not using a submodule for vcpkg sources, this specifies which commit
           # id must be checkout from a Git repo. It must not set if using a submodule
           # for vcpkg.
@@ -52,11 +55,14 @@ jobs:
           # This is the name of the CMakePresets.json's configuration to use to generate
           # the project files. This configuration leverages the vcpkg.cmake toolchain file to
           # run vcpkg and install all dependencies specified in vcpkg.json.
+          
+          # TODO: this probably won't work on linux, lol'
+          
           configurePreset: 'windows-x64-release'
 
           # This is the name of the CMakePresets.json's configuration to build the project.
           buildPreset: 'windows-x64-release'
-
+      - run: ls out/build
       - name: Archive build
         uses: actions/upload-artifact@v3
         with:
