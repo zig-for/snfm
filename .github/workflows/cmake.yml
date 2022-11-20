@@ -14,17 +14,16 @@ env:
 jobs:
   build:
     strategy:
-        matrix:
-            config:
-              - { os: macos-latest, name: macos-latest, vcpkg-dir: 'C:/lukka-vcpkg' }
-              - { os: ubuntu-latest, name: ubuntu-latest, vcpkg-dir: '/tmp/lukka-vcpkg' }
-              - { os: windows-latest, name: windows-latest, vcpkg-dir: '/tmp/lukka-vcpkg' }
+      matrix:
+        config:
+          - { os: macos-latest, name: macos-latest, vcpkg-dir: 'C:/lukka-vcpkg' }
+          - { os: ubuntu-latest, name: ubuntu-latest, vcpkg-dir: '/tmp/lukka-vcpkg' }
+          - { os: windows-latest, name: windows-latest, vcpkg-dir: '/tmp/lukka-vcpkg' }
     runs-on: ${{ matrix.config.os }}
     steps:
       - uses: actions/checkout@v2
         with:
           submodules: true
-      -
       - run: mkdir ${{ matrix.config.vcpkg-dir }}
       # Install latest CMake.
       - uses: lukka/get-cmake@latest
