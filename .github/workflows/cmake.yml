@@ -20,6 +20,7 @@ jobs:
           - { os: ubuntu-latest, name: ubuntu-latest, vcpkg-dir: '/tmp/lukka-vcpkg' }
           - { os: macos-latest, name: windows-latest, vcpkg-dir: '/tmp/lukka-vcpkg' }
     runs-on: ${{ matrix.config.os }}
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v2
         with:
