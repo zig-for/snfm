@@ -60,8 +60,7 @@
       "inherits": "base",
       "cacheVariables": {
         "CMAKE_C_COMPILER": "clang",
-        "CMAKE_CXX_COMPILER": "clang++",
-        "VCPKG_TARGET_TRIPLET": "x64-linux-static"
+        "CMAKE_CXX_COMPILER": "clang++"
       }
     },
     {
