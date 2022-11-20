@@ -27,8 +27,11 @@ jobs:
           submodules: true
       - run: mkdir ${{ matrix.config.vcpkg-dir }}
       # Install ninja on linux/macos
-      - run: sudo apt-get install ninja-build -y
+      - run: sudo apt-get install ninja-build -y;
         if: ${{ contains(matrix.config.os, 'ubuntu') }}
+      - run: ninja; echo $PATH
+        if: ${{ contains(matrix.config.os, 'ubuntu') }}
+
       # Install latest CMake.
       - uses: lukka/get-cmake@latest
       - name: Restore artifacts, or setup vcpkg (do not install any package)
@@ -79,7 +82,10 @@ jobs:
             out/build/${{ matrix.config.preset }}/*.dll
             out/build/${{ matrix.config.preset }}/manage_files
             out/build/${{ matrix.config.preset }}/send_file
-
+      - run: |
+          echo "RUNVCPKG_NO_CACHE=1" >> $GITHUB_ENV
+        if: ${{ failure() || cancelled() }}
+        shell: bash
   release:
     if: github.event_name == 'release'
     runs-on: windows-latest
