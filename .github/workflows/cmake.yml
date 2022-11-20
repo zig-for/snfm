@@ -75,7 +75,11 @@ jobs:
         with:
           name: snfm-${{ matrix.config.preset }}
           path: |
-            out/build/${{ matrix.config.preset }}/*
+            out/build/${{ matrix.config.preset }}/*.exe
+            out/build/${{ matrix.config.preset }}/*.dll
+            out/build/${{ matrix.config.preset }}/manage_files
+            out/build/${{ matrix.config.preset }}/send_file
+
   release:
     if: github.event_name == 'release'
     runs-on: windows-latest
