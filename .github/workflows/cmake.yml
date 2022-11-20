@@ -16,9 +16,9 @@ jobs:
     strategy:
         matrix:
             config:
-              - { os: macos-latest, name: macos-latest, vcpkg-dir: C:/lukka-vcpkg }
-              - { os: ubuntu-latest, name: ubuntu-latest, vcpkg-dir: /tmp/lukka-vcpkg }
-              - { os: windows-latest, name: windows-latest, vcpkg-dir: /tmp/lukka-vcpkg }
+              - { os: macos-latest, name: macos-latest, vcpkg-dir: 'C:/lukka-vcpkg' }
+              - { os: ubuntu-latest, name: ubuntu-latest, vcpkg-dir: '/tmp/lukka-vcpkg' }
+              - { os: windows-latest, name: windows-latest, vcpkg-dir: '/tmp/lukka-vcpkg' }
     runs-on: ${{ matrix.config.os }}
     steps:
       - uses: actions/checkout@v2
