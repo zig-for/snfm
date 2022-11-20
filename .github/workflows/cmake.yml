@@ -15,19 +15,23 @@ jobs:
   build:
     strategy:
         matrix:
-            os: [windows-latest, ubuntu-latest, macos-latest]
-    runs-on: ${{ matrix.os }}
+            config:
+              - { os: macos-latest, arch: x64, python-arch: x64, name: macos-latest, vcpkg-dir: C:/lukka-vcpkg }
+              - { os: ubuntu-latest, arch: x64, python-arch: x64, name: ubuntu-latest, vcpkg-dir: /tmp/lukka-vcpkg }
+              - { os: windows-latest, arch: x64, python-arch: x64, name: windows-latest, vcpkg-dir: /tmp/lukka-vcpkg }
+    runs-on: ${{ matrix.config.os }}
     steps:
       - uses: actions/checkout@v2
         with:
           submodules: true
-      - run: mkdir lukka-vcpkg
+      -
+      - run: mkdir ${{ matrix.config.vcpkg-dir }}
       # Install latest CMake.
       - uses: lukka/get-cmake@latest
       - name: Restore artifacts, or setup vcpkg (do not install any package)
         uses: lukka/run-vcpkg@v10
         with:
-          vcpkgDirectory: 'lukka-vcpkg'
+          vcpkgDirectory: ${{ matrix.config.vcpkg-dir }}
           # If not using a submodule for vcpkg sources, this specifies which commit
           # id must be checkout from a Git repo. It must not set if using a submodule
           # for vcpkg.
