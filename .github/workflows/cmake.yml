@@ -27,8 +27,8 @@ jobs:
           submodules: true
       - run: mkdir ${{ matrix.config.vcpkg-dir }}
       # Install ninja on linux/macos
-      - uses: seanmiddleditch/gha-setup-ninja@master
-        if: ${{ ! contains(matrix.config.os, 'windows-latest') }}
+      - run: sudo apt-get install ninja-build -y
+        if: ${{ contains(matrix.config.os, 'ubuntu') }}
       # Install latest CMake.
       - uses: lukka/get-cmake@latest
       - name: Restore artifacts, or setup vcpkg (do not install any package)
