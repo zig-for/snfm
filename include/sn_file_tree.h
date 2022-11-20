@@ -97,6 +97,7 @@ public:
 #endif
         dir_menu_->Append(SNIMenuItem_Import, "Import...")->SetBitmap(exportIcon);
         dir_menu_->Append(SNIMenuItem_Export, "Export...")->SetBitmap(importIcon);
+        dir_menu_->Append(SNIMenuItem_Delete, "Delete"); // todo icon;
 
         Bind(wxEVT_COMMAND_MENU_SELECTED, &SNFileTree::OnContextMenuSelected, this);
 
