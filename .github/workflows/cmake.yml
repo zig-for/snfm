@@ -78,8 +78,8 @@ jobs:
         with:
           name: snfm-${{ matrix.config.preset }}
           path: |
-            out/build/${{ matrix.config.preset }}/*.exe
-            out/build/${{ matrix.config.preset }}/*.dll
+            out/build/${{ matrix.config.preset }}/manage_files.exe
+            out/build/${{ matrix.config.preset }}/send_file.exe
             out/build/${{ matrix.config.preset }}/manage_files
             out/build/${{ matrix.config.preset }}/send_file
       - run: |
