@@ -25,6 +25,8 @@ jobs:
       - uses: actions/checkout@v2
         with:
           submodules: true
+      - run: sudo apt-get install pkg-config libgtk-3-dev libsecret-1-dev libgcrypt20-dev libsystemd-dev
+        if: ${{ contains(matrix.config.os, 'ubuntu') }}
       - run: mkdir ${{ matrix.config.vcpkg-dir }}
       # Install latest CMake.
       - uses: lukka/get-cmake@latest
