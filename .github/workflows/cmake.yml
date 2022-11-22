@@ -135,15 +135,15 @@ jobs:
         with:
           tag: ${{ env.GITHUB_REF_SLUG }}
           overwrite: true
-          asset_name: snfm-windows-x64-release.zip
-          file: snfm-$tag-windows-x64.zip
+          asset_name: snfm-$tag-windows-x64.zip
+          file: snfm-windows-x64-release.zip
       - name: Upload binaries to release
         uses: svenstaro/upload-release-action@v2
         with:
           tag: ${{ env.GITHUB_REF_SLUG }}
           overwrite: true
-          asset_name: snfm-linux-x64-release.zip
-          file: snfm-$tag-linux-x64-release.zip
+          asset_name: snfm-$tag-linux-x64-release.zip
+          file: snfm-linux-x64-release.zip
       - name: Upload binaries to release
         uses: svenstaro/upload-release-action@v2
         with:
