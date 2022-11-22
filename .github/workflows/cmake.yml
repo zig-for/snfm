@@ -69,7 +69,8 @@ jobs:
 
           # This is the name of the CMakePresets.json's configuration to build the project.
           buildPreset: '${{ matrix.config.preset }}'
-      - run: ls out/build
+      - run: rm -rf ${{ matrix.config.vcpkg-dir }}/buildtrees
+      - run: rm -rf ${{ matrix.config.vcpkg-dir }}/downloads
       - name: Archive build
         uses: actions/upload-artifact@v3
         with:
