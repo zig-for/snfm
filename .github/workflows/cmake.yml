@@ -62,15 +62,19 @@ jobs:
           # This is the name of the CMakePresets.json's configuration to use to generate
           # the project files. This configuration leverages the vcpkg.cmake toolchain file to
           # run vcpkg and install all dependencies specified in vcpkg.json.
-          
-          # TODO: this probably won't work on linux, lol'
-          
+                    
           configurePreset: '${{ matrix.config.preset }}'
 
           # This is the name of the CMakePresets.json's configuration to build the project.
           buildPreset: '${{ matrix.config.preset }}'
-      - run: rm -rf ${{ matrix.config.vcpkg-dir }}/buildtrees
-      - run: rm -rf ${{ matrix.config.vcpkg-dir }}/downloads
+      - name: Remove buildtrees from cache
+        uses: JesseTG/rm@v1.0.3
+        with:
+          path: ${{ matrix.config.vcpkg-dir }}/buildtrees
+      - name: Remove downloads from cache
+        uses: JesseTG/rm@v1.0.3
+        with:
+          path: ${{ matrix.config.vcpkg-dir }}/downloads
       - name: Archive build
         uses: actions/upload-artifact@v3
         with:
