@@ -85,7 +85,7 @@ jobs:
         shell: bash
   release:
     if: github.event_name == 'release'
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     needs: build
     steps:
       - name: Inject slug/short variables
@@ -136,18 +136,18 @@ jobs:
           tag: ${{ env.GITHUB_REF_SLUG }}
           overwrite: true
           asset_name: snfm-windows-x64-release.zip
-          file: snfm-windows-x64-release.zip
+          file: snfm-$tag-windows-x64.zip
       - name: Upload binaries to release
         uses: svenstaro/upload-release-action@v2
         with:
           tag: ${{ env.GITHUB_REF_SLUG }}
           overwrite: true
           asset_name: snfm-linux-x64-release.zip
-          file: snfm-linux-x64-release.zip
+          file: snfm-$tag-linux-x64-release.zip
       - name: Upload binaries to release
         uses: svenstaro/upload-release-action@v2
         with:
           tag: ${{ env.GITHUB_REF_SLUG }}
           overwrite: true
-          asset_name: snfm-macos-x64-release.zip
+          asset_name: snfm-$tag-macos-x64.zip
           file: snfm-macos-x64-release.zip
