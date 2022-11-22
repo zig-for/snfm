@@ -17,7 +17,7 @@ jobs:
       matrix:
         config:
           - { os: windows-latest, preset: windows-x64-release, vcpkg-dir: 'C:/lukka-vcpkg' }
-          - { os: ubuntu-latest, preset: linux-x64-release, vcpkg-dir: '/tmp/lukka-vcpkg' }
+          - { os: ubuntu-20.04, preset: linux-x64-release, vcpkg-dir: '/tmp/lukka-vcpkg' }
           - { os: macos-latest, preset: macos-x64-release, vcpkg-dir: '/tmp/lukka-vcpkg' }
     runs-on: ${{ matrix.config.os }}
     continue-on-error: true
@@ -105,6 +105,13 @@ jobs:
         with:
           name: snfm-macos-x64-release
           path: macos
+      - name: Fix +x
+        run: |
+          chmod +x linux/send_file
+          chmod +x linux/manage_files
+          chmod +x macos/send_file
+          chmod +x macos/manage_files
+
       - name: Archive Release
         uses: thedoctor0/zip-release@main
         with:
