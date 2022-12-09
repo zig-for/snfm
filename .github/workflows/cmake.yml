@@ -147,7 +147,7 @@ jobs:
         with:
           tag: ${{ env.GITHUB_REF_SLUG }}
           overwrite: true
-          asset_name: snfm-$tag-linux-x64-release.zip
+          asset_name: snfm-$tag-linux-x64.zip
           file: snfm-linux-x64-release.zip
       - name: Upload binaries to release
         uses: svenstaro/upload-release-action@v2
