@@ -23,4 +23,4 @@ struct Config
     std::optional<std::reference_wrapper<const RomDestinationRule>> FindRuleForRom(const std::string& rom_name);
 };
 
-std::optional<Config> LoadConfig(const std::string& path = "config.yaml");
+std::optional<Config> LoadConfig(const std::string& path = "snfm_config.yaml");
