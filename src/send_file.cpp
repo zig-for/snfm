@@ -12,21 +12,21 @@ void do_error(const std::string& e)
     std::getline(std::cin, s);
 }
 
+
 int main(int argc, char* argv[])
 {
-    std::optional<Config> config;
-    try {
-        config = LoadConfig();
-    }
-    catch (YAML::Exception e)
-    {
-        std::cout << "Error loading config: " << e.what() << std::endl;
-        return 1;
-    }
-
-    for (int i = 0; i < argc; i++)
-    {
-        std::cout << argv[i] << std::endl;
+    auto maybePath = FindExistingConfigFile(std::filesystem::path(argv[0]).parent_path());
+    Config config;
+    if (maybePath) {
+        std::optional<Config> config;
+        try {
+            config = LoadConfig(*maybePath);
+        }
+        catch (YAML::Exception e)
+        {
+            std::cout << "Error loading config: " << e.what() << std::endl;
+            return 1;
+        }
     }
 
     if (argc != 2)
@@ -36,10 +36,12 @@ int main(int argc, char* argv[])
     }
 
     std::filesystem::path rom_path = argv[1];
-    std::string device_directory = config->default_rom_directory;
+    std::cout << rom_path.string() << std::endl;
+
+    std::string device_directory = config.default_rom_directory;
     std::string destination_rom_name = rom_path.filename().string();
 
-    auto maybe_rule = config->FindRuleForRom(rom_path.filename().string());
+    auto maybe_rule = config.FindRuleForRom(rom_path.filename().string());
     if (maybe_rule)
     {
         auto rule = maybe_rule->get();
@@ -48,7 +50,6 @@ int main(int argc, char* argv[])
             RomDestination& destination = rule.destinations[0];
             if (rule.destinations.size() > 1)
             {
-
                 std::cout << "Rule " << rule.name << " has multiple destinations possible, please choose the destination:" << std::endl;
 
                 size_t longest_name = 0;

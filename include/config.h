@@ -1,4 +1,5 @@
-﻿#include <optional>
+﻿#include <filesystem>
+#include <optional>
 #include <vector>
 #include <string>
 #include <yaml-cpp/yaml.h>
@@ -23,4 +24,7 @@ struct Config
     std::optional<std::reference_wrapper<const RomDestinationRule>> FindRuleForRom(const std::string& rom_name);
 };
 
-std::optional<Config> LoadConfig(const std::string& path = "snfm_config.yaml");
+Config LoadConfig(const std::filesystem::path& path);
+
+
+std::optional<std::filesystem::path> FindExistingConfigFile(const std::filesystem::path& pwd);

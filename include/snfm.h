@@ -91,7 +91,7 @@ public:
             request.set_path(directory);
         }
         ReadDirectoryResponse response;
-        std::cout << request.DebugString() << std::endl;
+        //std::cout << request.DebugString() << std::endl;
         filesystem_stub_->ReadDirectory(&context, request, &response);
         return response;
     }
@@ -104,7 +104,7 @@ public:
         }
         if (recurse)
         {
-            std::cout << directory.string() << std::endl;
+           //std::cout << directory.string() << std::endl;
             makeDirectory(uri, directory.parent_path(), recurse);
         }
         grpc::ClientContext context;
@@ -114,9 +114,9 @@ public:
             request.set_path(directory.string());
         }
         MakeDirectoryResponse response;
-        std::cout << request.DebugString() << std::endl;
+        //std::cout << request.DebugString() << std::endl;
         auto status = filesystem_stub_->MakeDirectory(&context, request, &response);
-        std::cout << response.DebugString() << std::endl;
+        //std::cout << response.DebugString() << std::endl;
 
         // this can fail and that's ok
     }
@@ -129,7 +129,7 @@ public:
         std::filesystem::path filename = destination_rom_name ? *destination_rom_name : local_path.filename();
 
         std::filesystem::path device_path = device_directory / filename;    
-        std::cout << device_path;
+        //std::cout << device_path;
         std::ifstream file(local_path, std::ios::in | std::ios::binary);
         if (!file.is_open())
         {
