@@ -1,7 +1,7 @@
 #include <config.h>
 #include <iostream>
 #include <string_view>
-#include <ranges>
+//#include <ranges>
 #ifdef WIN32
 #include <shlwapi.h>
 bool globMatch(const char* pattern, const char* s) {
