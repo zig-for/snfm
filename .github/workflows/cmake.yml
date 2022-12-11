@@ -84,6 +84,8 @@ jobs:
             out/build/${{ matrix.config.preset }}/send_file.exe
             out/build/${{ matrix.config.preset }}/manage_files
             out/build/${{ matrix.config.preset }}/send_file
+            out/build/${{ matrix.config.preset }}/snfm_user_manual.md
+            out/build/${{ matrix.config.preset }}/snfm_config_example.yaml
       - run: |
           echo "RUNVCPKG_NO_CACHE=1" >> $GITHUB_ENV
         if: ${{ failure() || cancelled() }}
