@@ -75,11 +75,6 @@ std::optional<std::filesystem::path> FindExistingConfigFile(const std::filesyste
 #if WIN32
     dirs.push_back(std::filesystem::path(std::getenv("LOCALAPPDATA")) / "snfm");
 #else
-    const char* xdg_config = std::getenv("XDG_CONFIG_DIRS");
-    std::vector<std::filesystem::path> dirs = {
-        pwd,
-    };
-
     const char* xdg_config_dirs = std::getenv("XDG_CONFIG_DIRS");
 
     if (xdg_config_dirs)
