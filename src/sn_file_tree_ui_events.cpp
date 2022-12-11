@@ -223,6 +223,23 @@ bool SNFileTree::OnDropFiles(wxCoord x, wxCoord y, const wxArrayString& filename
     return false;
 }
 
+// TODO: could store name of item instead
+void SNFileTree::SetItemDropHighlightHack(wxTreeItemId root)
+{
+    wxTreeItemIdValue cookie;
+    wxTreeItemId item = GetFirstChild(root, cookie);
+
+    while (item.IsOk())
+    {
+        if (ItemHasChildren(item))
+        {
+            SetItemDropHighlightHack(item);
+            SetItemDropHighlight(item, false);
+        }
+        item = GetNextChild(root, cookie);
+    }
+}
+
 wxDragResult SNFileTree::OnDragOver(wxCoord 	x,
     wxCoord 	y,
     wxDragResult 	defResult
@@ -233,6 +250,13 @@ wxDragResult SNFileTree::OnDragOver(wxCoord 	x,
     if (last_dnd_highlight_.IsOk())
     {
         SetItemDropHighlight(last_dnd_highlight_, false);
+    }
+    else
+    {
+#if !WIN32
+        // Linux has a bug where the highlight goes invalid, no idea why
+        SetItemDropHighlightHack(GetRootItem());
+#endif
     }
     last_dnd_highlight_ = hit;
     if (hit.IsOk())

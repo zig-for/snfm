@@ -146,6 +146,7 @@ public:
 
     bool rename(wxTreeItemId file, const std::string& name);
 private:
+    void SetItemDropHighlightHack(wxTreeItemId root);
 
     void OnSelect(wxTreeEvent& event);
 
