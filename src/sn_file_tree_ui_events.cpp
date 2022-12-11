@@ -230,7 +230,10 @@ wxDragResult SNFileTree::OnDragOver(wxCoord 	x,
 {
     wxTreeItemId hit = HitTestFromGlobal({ x, y });
 
-    SetItemDropHighlight(last_dnd_highlight_, false);
+    if (last_dnd_highlight_.IsOk())
+    {
+        SetItemDropHighlight(last_dnd_highlight_, false);
+    }
     last_dnd_highlight_ = hit;
     if (hit.IsOk())
     {
