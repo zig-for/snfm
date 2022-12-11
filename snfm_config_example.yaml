@@ -1,0 +1,73 @@
+# Configuration file for snfm
+#
+# Rename this file to "snfm_config.yaml" and put in one of these directories
+# (shown here in search order):
+# 
+# WINDOWS:
+# 1. The same directory that send_file.exe is in
+# 2. %LOCALAPPDATA%/snfm
+#
+# UNIX:
+# 1. The same directory that send_file is in
+# 2. Any of $XDG_CONFIG_DIRS/snfm
+# 3. $HOME/.config/snfm (if $XDG_CONFIG_DIRS unset)
+# 
+
+### default directory to put the ROM if no rules are matched.
+### Default is .sni - directories that start with "." are hidden in the FXPAKPRO UI
+# default_rom_directory: ".sni"
+
+### a set of rules to use to put certain ROMs in certain locations, such as your randomizer ROMs, useful for MSU1 users
+rom_destination_rules:
+  # Unique name for your rule
+  alttpr:
+    # List of glob patterns to match your ROM name against
+    name_patterns:
+      - "ALttP - VT_*" # look for an input ROM that matches this name
+      - "alttpr - *"
+      - "alttprcustom - *"
+      - "ER_*"
+      - "DR_*"
+      - "P1_*"
+      - "*DR_*"
+      - "BD_*"
+      - "Daily Challenge_*"
+    # If there are multiple destinations, a window will pop up asking you to pick
+    destinations:
+      - name: default
+        path: "/ROMs/_alttpr"
+      - name: WildArms2                 # The name shown in the popup UI
+        path: "/ROMs/_alttpr/_msu1/wa2" # The directory where the ROM will go on device
+        rom_name: alttp_msu.sfc         # (optional) name for the ROM to be renamed to
+      - name: FinalFantasy7
+        path: "/ROMs/_alttpr/_msu1/ff7"
+        rom_name: alttp_msu.sfc
+      - name: FinalFantasy7Remake
+        path: "/ROMs/_alttpr/_msu1/ff7r"
+        rom_name: alttp_msu.sfc
+      - name: Naruto
+        path: "/ROMs/_alttpr/_msu1/Naruto"
+        rom_name: alttp_msu.sfc
+      - name: Kirby and the Forgotten Land
+        path: "/ROMs/_alttpr/_msu1/KirbyForgottenLand"
+        rom_name: alttp_msu.sfc
+  smz3:
+    name_patterns:
+      - "SMALttP - sm-*"
+    # If there is a single destination, it's chosen automatically
+    destinations:
+      - name: default
+        path: "/ROMs/_smz3"
+  smw:
+    name_patterns:
+      - "smw-*"
+    destinations:
+      - name: default
+        path: "/ROMs/SuperMarioWorld/Rando"
+  supermetroiditem:
+    name_patterns:
+      - "Item Randomizer *"
+      - "VARIA_Randomizer_*"
+    destinations:
+      - name: default
+        path: "/ROMs/SuperMetroid/Rando"

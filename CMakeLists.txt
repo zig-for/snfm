@@ -113,3 +113,16 @@ if(WIN32)
     set(CMAKE_MFC_FLAG 2)
     set_target_properties(manage_files PROPERTIES WIN32_EXECUTABLE TRUE)
 endif()
+
+add_custom_command(
+        TARGET send_file POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+                ${CMAKE_SOURCE_DIR}/snfm_config_example.yaml
+                ${CMAKE_CURRENT_BINARY_DIR}/snfm_config_example.yaml)
+
+
+add_custom_command(
+TARGET send_file POST_BUILD
+COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/snfm_user_manual.md
+        ${CMAKE_CURRENT_BINARY_DIR}/snfm_user_manual.md)
