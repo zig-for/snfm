@@ -2,7 +2,6 @@
 #include "config.h"
 #include <algorithm>
 #include <filesystem>
-#include <format>
 
 void do_error(const std::string& e)
 {
