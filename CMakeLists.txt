@@ -3,19 +3,18 @@ cmake_policy(SET CMP0091 NEW)
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 project(snfm)
 
-# include(FindProtobuf)
 set ( Protobuf_USE_STATIC_LIBS ON )
 find_package(Protobuf REQUIRED)
 find_package(gRPC CONFIG REQUIRED)
-
+find_package(yaml-cpp REQUIRED)
 # Force wxwidgets to turn off debug build
 set(wxWidgets_USE_DEBUG OFF)
 # Workaround issue where wxwidgets can't find a release only build with the above flag
-message(STATUS "WXWIDGETS DIR "${wxWidgets_LIB_DIR})
+message(STATUS "WXWIDGETS DIR " ${wxWidgets_LIB_DIR})
 IF(CMAKE_BUILD_TYPE MATCHES "Release")
 set(wxWidgets_LIB_DIR ${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib)
 endif()
-message(STATUS "new WXWIDGETS DIR "${wxWidgets_LIB_DIR})
+message(STATUS "new WXWIDGETS DIR " ${wxWidgets_LIB_DIR})
 find_package(wxWidgets REQUIRED COMPONENTS core base)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -86,15 +85,23 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR} include icons %)
 add_library(snfm_common ${PROTO_SRCS} ${PROTO_HDRS} ${PROTO_GRPC_SRCS} ${PROTO_GRPC_HDRS})
 target_link_libraries(snfm_common protobuf::libprotoc protobuf::libprotobuf gRPC::grpc++_unsecure)
 
-add_executable(send_file "src/send_file.cpp" "src/snfm.cpp")
-target_link_libraries(send_file PRIVATE snfm_common)
+add_library(config "src/config.cpp")
+target_link_libraries(config PRIVATE yaml-cpp)
 if(WIN32)
-target_sources(send_file PRIVATE "windows/send_file.rc")
+    target_link_libraries(config PRIVATE Shlwapi.lib)
+endif(WIN32)
+add_executable(send_file 
+    "src/send_file.cpp" 
+    "src/snfm.cpp"
+    "src/config.cpp")
+target_link_libraries(send_file PRIVATE snfm_common config)
+if(WIN32)
+    target_sources(send_file PRIVATE "windows/send_file.rc")
 endif(WIN32)
 
 add_executable(manage_files WIN32 "src/sn_file_tree.cpp" "src/sn_file_tree_ui_events.cpp" "src/manage_files.cpp" "src/snfm.cpp")
 if(WIN32)
-target_sources(manage_files PRIVATE "src/win_dnd.cpp" "windows/manage_files.rc")
+    target_sources(manage_files PRIVATE "src/win_dnd.cpp" "windows/manage_files.rc")
 endif(WIN32)
 target_link_libraries(manage_files PRIVATE snfm_common)
 target_compile_definitions(manage_files PRIVATE ${wxWidgets_DEFINITIONS} "$<$<CONFIG:DEBUG>:${wxWidgets_DEFINITIONS_DEBUG}>" wxDEBUG_LEVEL=0 )
@@ -102,14 +109,20 @@ target_include_directories(manage_files PRIVATE ${wxWidgets_INCLUDE_DIRS})
 target_link_libraries(manage_files PRIVATE ${wxWidgets_LIBRARIES}) 
 
 if(WIN32)
-# Magic bits to enable MFC
-set(CMAKE_MFC_FLAG 2)
-set_target_properties(manage_files PROPERTIES WIN32_EXECUTABLE TRUE)
+    # Magic bits to enable MFC
+    set(CMAKE_MFC_FLAG 2)
+    set_target_properties(manage_files PROPERTIES WIN32_EXECUTABLE TRUE)
 endif()
 
+add_custom_command(
+        TARGET send_file POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+                ${CMAKE_SOURCE_DIR}/snfm_config_example.yaml
+                ${CMAKE_CURRENT_BINARY_DIR}/snfm_config_example.yaml)
 
 
-#add_compile_options("$<$<C_COMPILER_ID:MSVC>:/utf-8>")
-#add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
-
-
+add_custom_command(
+TARGET send_file POST_BUILD
+COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/snfm_user_manual.md
+        ${CMAKE_CURRENT_BINARY_DIR}/snfm_user_manual.md)

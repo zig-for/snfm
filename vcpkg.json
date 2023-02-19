@@ -10,6 +10,7 @@
         "codegen"
       ]
     },
-    "wxwidgets"
+    "wxwidgets",
+    "yaml-cpp"
   ]
 }

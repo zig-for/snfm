@@ -146,6 +146,7 @@ public:
 
     bool rename(wxTreeItemId file, const std::string& name);
 private:
+    void SetItemDropHighlightHack(wxTreeItemId root);
 
     void OnSelect(wxTreeEvent& event);
 
@@ -432,7 +433,6 @@ private:
         item = parentDirIfNotDir(item);
         std::filesystem::path device_folder = constructPath(item);
 
-        UnselectAll();
 
         std::vector<std::filesystem::path> successful_files;
 
@@ -460,6 +460,8 @@ private:
 
         // todo: wrong for folder imports, potentially
         refreshFolder(item);
+
+        UnselectAll();
 
         // Can only showNameUnder() after a refresh, or else the tree won't be built yet
         for (const auto& file : successful_files)

@@ -91,33 +91,45 @@ public:
             request.set_path(directory);
         }
         ReadDirectoryResponse response;
-        std::cout << request.DebugString() << std::endl;
+        //std::cout << request.DebugString() << std::endl;
         filesystem_stub_->ReadDirectory(&context, request, &response);
         return response;
     }
 
-    void makeDirectory(const std::string& uri, const std::string& directory)
+    void makeDirectory(const std::string& uri, const std::filesystem::path& directory, bool recurse = false)
     {
+        if (directory == "/")
+        {
+            return;
+        }
+        if (recurse)
+        {
+           //std::cout << directory.string() << std::endl;
+            makeDirectory(uri, directory.parent_path(), recurse);
+        }
         grpc::ClientContext context;
         MakeDirectoryRequest request;
         {
             request.set_uri(uri);
-            request.set_path(directory);
+            request.set_path(directory.string());
         }
         MakeDirectoryResponse response;
-        std::cout << request.DebugString() << std::endl;
-        filesystem_stub_->MakeDirectory(&context, request, &response);
-        std::cout << response.DebugString() << std::endl;
+        //std::cout << request.DebugString() << std::endl;
+        auto status = filesystem_stub_->MakeDirectory(&context, request, &response);
+        //std::cout << response.DebugString() << std::endl;
 
         // this can fail and that's ok
     }
 
-    std::optional<std::filesystem::path> putFile(const std::string& uri, const std::filesystem::path& local_path, const std::filesystem::path device_directory)
+    std::optional<std::filesystem::path> putFile(const std::string& uri,
+        const std::filesystem::path& local_path,
+        const std::filesystem::path device_directory,
+        std::optional<std::filesystem::path> destination_rom_name = std::nullopt)
     {
-        std::filesystem::path filename = local_path.filename();
+        std::filesystem::path filename = destination_rom_name ? *destination_rom_name : local_path.filename();
 
-        std::filesystem::path device_path = device_directory / filename;
-
+        std::filesystem::path device_path = device_directory / filename;    
+        //std::cout << device_path;
         std::ifstream file(local_path, std::ios::in | std::ios::binary);
         if (!file.is_open())
         {
