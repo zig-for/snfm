@@ -26,7 +26,7 @@ class SNFileTree : public wxTreeCtrl, wxFileDropTarget
 
     enum SNIMenuItem
     {
-        SNIMenuItem_Run,
+        SNIMenuItem_Run = 101,
         SNIMenuItem_Refresh,
         SNIMenuItem_Rename,
         SNIMenuItem_CreateDirectory,

@@ -1,4 +1,4 @@
-﻿#include "sn_file_tree.h"
+#include "sn_file_tree.h"
 #include "manage_files.xpm"
 #include "snes.xpm"
 #include "icons.h"
@@ -11,6 +11,7 @@ class FileManagerFrame : public wxFrame
 {
 public:
     FileManagerFrame(const wxString& title, const wxPoint& pos, const wxSize& size);
+    ~FileManagerFrame();
 private:
 
     void OnExit(wxCommandEvent& event);
@@ -41,8 +42,8 @@ private:
 
 enum
 {
-    MenuID_ResetGame = 1,
-    MenuID_ResetToMenu,
+    MenuID_ResetGame = 101,
+    MenuID_ResetToMenu = 102,
     
 };
 wxBEGIN_EVENT_TABLE(FileManagerFrame, wxFrame)
@@ -77,9 +78,9 @@ FileManagerFrame::FileManagerFrame(const wxString& title, const wxPoint& pos, co
 
     wxMenu* menuDevice = new wxMenu;
     resetGameButton_ = menuDevice->Append(MenuID_ResetGame, "Reset Game");
-    resetGameButton_->SetBitmap(GetSystemIcon(SystemIcon::RESET_GAME));;
+    resetGameButton_->SetBitmap(GetSystemIcon(SystemIcon::RESET_GAME));
     resetToMenuButton_ = menuDevice->Append(MenuID_ResetToMenu, "Reset to Menu");
-    resetToMenuButton_->SetBitmap(GetSystemIcon(SystemIcon::RESET_TO_MENU));;
+    resetToMenuButton_->SetBitmap(GetSystemIcon(SystemIcon::RESET_TO_MENU));
 
     wxMenu* menuHelp = new wxMenu;
 
@@ -146,7 +147,9 @@ FileManagerFrame::FileManagerFrame(const wxString& title, const wxPoint& pos, co
     RefreshUris();
 }
 
-
+FileManagerFrame::~FileManagerFrame() {
+    wxWindow::SetDropTarget(nullptr);
+}
 
 void FileManagerFrame::OnRefreshButton(wxCommandEvent& event)
 {
