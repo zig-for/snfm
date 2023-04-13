@@ -111,7 +111,7 @@
     },
     {
       "name": "macos-arm64-release",
-      "displayName": "MacOS x64 Release",
+      "displayName": "MacOS ARM64 Release",
       "description": "MacOS",
       "inherits": "macos-base",
       "cacheVariables": {
