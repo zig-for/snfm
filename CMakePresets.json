@@ -108,6 +108,16 @@
         "CMAKE_BUILD_TYPE": "Release",
         "VCPKG_TARGET_TRIPLET": "x64-macos-static-release"
       }
+    },
+    {
+      "name": "macos-arm64-release",
+      "displayName": "MacOS x64 Release",
+      "description": "MacOS",
+      "inherits": "macos-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "VCPKG_TARGET_TRIPLET": "arm64-macos-static-release"
+      }
     }
   ],
   "buildPresets": [
