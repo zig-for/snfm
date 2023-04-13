@@ -31,7 +31,7 @@ jobs:
       - run: sudo apt-get update && sudo apt-get install pkg-config libgtk-3-dev libsecret-1-dev libgcrypt20-dev libsystemd-dev freeglut3-dev
         if: ${{ contains(matrix.config.os, 'ubuntu') }}
       - run: brew install pkg-config
-        if: ${{ contains(matrix.config.os, 'macos') }} || ${{ contains(matrix.config.os, 'osx') }} 
+        if: ${{ contains(matrix.config.os, 'macos') || contains(matrix.config.os, 'osx') }} 
 
 
       - run: mkdir ${{ matrix.config.vcpkg-dir }}
