@@ -11,4 +11,4 @@
 
 ## Linux/MacOS instructions
 
-The same, but install the dependencies through git/apt. Good luck.
+The same, roughly.
