@@ -116,7 +116,11 @@
       "inherits": "macos-base",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
-        "VCPKG_TARGET_TRIPLET": "arm64-macos-static-release"
+        "VCPKG_TARGET_TRIPLET": "arm64-macos-static-release",
+        "VCPKG_HOST_TRIPLET": "x64-macos-static-release"
+      },
+      "environment": {
+        "PKG_CONFIG": "/opt/homebrew/bin/pkg-config"
       }
     }
   ],
