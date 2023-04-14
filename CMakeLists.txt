@@ -4,8 +4,10 @@ cmake_minimum_required(VERSION 3.22)
 cmake_policy(SET CMP0091 NEW)
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 if(DEFINED VCPKG_HOST_TRIPLET AND NOT VCPKG_HOST_TRIPLET STREQUAL "")
-set( gRPC_BUILD_CODEGEN=OFF)
-endif()
+set( gRPC_BUILD_CODEGEN OFF)
+endif
+set( gRPC_BUILD_CODEGEN OFF)
+
 project(snfm)
 
 set ( Protobuf_USE_STATIC_LIBS ON )
@@ -22,12 +24,8 @@ endif()
 message(STATUS "new WXWIDGETS DIR " ${wxWidgets_LIB_DIR})
 find_package(wxWidgets REQUIRED COMPONENTS core base)
 
-
 set(CMAKE_CXX_STANDARD 20)
 get_property(GRPC_CPP_PLUGIN TARGET gRPC::grpc_cpp_plugin PROPERTY IMPORTED_LOCATION_RELEASE )
-
-message("gRPC_BUILD_CODEGEN " ${gRPC_BUILD_CODEGEN} )
-message("GRPC_CPP_PLUGIN " ${GRPC_CPP_PLUGIN})
 
 function(PROTOBUF_GENERATE_GRPC_CPP SRCS HDRS)
   if(NOT ARGN)
