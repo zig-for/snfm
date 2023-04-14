@@ -8,4 +8,3 @@ set(VCPKG_OSX_ARCHITECTURES arm64)
 
 set(gRPC_PROTOBUF_PROVIDER package)
 set(gRPC_PROTOBUF_PACKAGE_TYPE CONFIG)
-set(_GRPC_CPP_PLUGIN_EXECUTABLE /usr/local/bin/grpc_cpp_plugin)
