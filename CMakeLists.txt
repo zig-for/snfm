@@ -3,10 +3,6 @@ cmake_policy(SET CMP0091 NEW)
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 project(snfm)
 
-# If we're cross compiling, don't dig inside of vcpkg for the grpc binaries
-if(DEFINED VCPKG_HOST_TRIPLET)
-    set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
-endif()
 
 set ( Protobuf_USE_STATIC_LIBS ON )
 find_package(Protobuf REQUIRED)
@@ -23,7 +19,7 @@ message(STATUS "new WXWIDGETS DIR " ${wxWidgets_LIB_DIR})
 find_package(wxWidgets REQUIRED COMPONENTS core base)
 
 set(CMAKE_CXX_STANDARD 20)
-find_program(GRPC_CPP_PLUGIN grpc_cpp_plugin) # Get full path to plugin
+get_property(GRPC_CPP_PLUGIN TARGET gRPC::grpc_cpp_plugin PROPERTY IMPORTED_LOCATION_RELEASE )
 
 function(PROTOBUF_GENERATE_GRPC_CPP SRCS HDRS)
   if(NOT ARGN)
