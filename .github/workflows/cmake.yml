@@ -17,7 +17,7 @@ jobs:
       matrix:
         config:
           - { os: windows-latest, preset: windows-x64-release, vcpkg-dir: 'C:/lukka-vcpkg' }
-          - { os: ubuntu-20.04, preset: linux-x64-release, vcpkg-dir: '/tmp/lukka-vcpkg' }
+          - { os: ubuntu-20.04, preset: linux-x64-debug, vcpkg-dir: '/tmp/lukka-vcpkg' }
           - { os: macos-latest, preset: macos-x64-release, vcpkg-dir: '/tmp/lukka-vcpkg' }
     runs-on: ${{ matrix.config.os }}
     continue-on-error: true

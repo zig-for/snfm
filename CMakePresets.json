@@ -100,6 +100,16 @@
       }
     },
     {
+      "name": "linux-x64-debug",
+      "displayName": "Linux x64 Debug",
+      "description": "Linux",
+      "inherits": "linux-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "VCPKG_TARGET_TRIPLET": "x64-linux-static-debug"
+      }
+    },
+    {
       "name": "macos-x64-release",
       "displayName": "MacOS x64 Release",
       "description": "MacOS",
@@ -125,6 +135,11 @@
       "name": "linux-x64-release",
       "configurePreset": "linux-x64-release",
       "displayName": "Linux x64 Release"
+    },
+    {
+      "name": "linux-x64-debug",
+      "configurePreset": "linux-x64-debug",
+      "displayName": "Linux x64 Debug"
     },
     {
       "name": "macos-x64-release",
