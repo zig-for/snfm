@@ -11,6 +11,7 @@ if (UPB_LIBRARIES)
   add_executable(protobuf::protoc-gen-upb IMPORTED)
   add_executable(protobuf::protoc-gen-upbdefs IMPORTED)
   add_executable(protobuf::protoc-gen-upb_minitable IMPORTED)
+endif()
 find_package(gRPC CONFIG REQUIRED)
 find_package(yaml-cpp REQUIRED)
 # Force wxwidgets to turn off debug build
@@ -134,3 +135,4 @@ COMMAND ${CMAKE_COMMAND} -E copy
         ${CMAKE_SOURCE_DIR}/snfm_user_manual.md
 
         ${CMAKE_CURRENT_BINARY_DIR}/snfm_user_manual.md)
+
