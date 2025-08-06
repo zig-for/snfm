@@ -5,6 +5,12 @@ project(snfm)
 
 set ( Protobuf_USE_STATIC_LIBS ON )
 find_package(Protobuf REQUIRED)
+find_library (UPB_LIBRARIES NAMES upb)
+if (UPB_LIBRARIES)
+  add_library(protobuf::libupb STATIC IMPORTED)
+  add_executable(protobuf::protoc-gen-upb IMPORTED)
+  add_executable(protobuf::protoc-gen-upbdefs IMPORTED)
+  add_executable(protobuf::protoc-gen-upb_minitable IMPORTED)
 find_package(gRPC CONFIG REQUIRED)
 find_package(yaml-cpp REQUIRED)
 # Force wxwidgets to turn off debug build
@@ -126,4 +132,5 @@ add_custom_command(
 TARGET send_file POST_BUILD
 COMMAND ${CMAKE_COMMAND} -E copy
         ${CMAKE_SOURCE_DIR}/snfm_user_manual.md
+
         ${CMAKE_CURRENT_BINARY_DIR}/snfm_user_manual.md)
