@@ -26,6 +26,7 @@ jobs:
     continue-on-error: true
     steps:
       - run: ninja --version
+      - run: cmake --version
       - uses: actions/checkout@v2
         with:
           submodules: true
@@ -44,30 +45,15 @@ jobs:
 
       # Install latest CMake.
       - uses: lukka/get-cmake@v4.2.0
-      - name: Run CMake consuming CMakePreset.json and vcpkg.json by mean of vcpkg.
-        uses: lukka/run-cmake@v10
-        with:
-          # This is the default path to the CMakeLists.txt along side the
-          # CMakePresets.json. Change if you need have CMakeLists.txt and CMakePresets.json
-          # located elsewhere.
-          # cmakeListsTxtPath: 'C:/snfm/CMakeLists.txt'
-
-          # This is the name of the CMakePresets.json's configuration to use to generate
-          # the project files. This configuration leverages the vcpkg.cmake toolchain file to
-          # run vcpkg and install all dependencies specified in vcpkg.json.
-                    
-          configurePreset: '${{ matrix.config.preset }}'
-
-          # This is the name of the CMakePresets.json's configuration to build the project.
-          buildPreset: '${{ matrix.config.preset }}'
+      - run: cmake -B build -S . "-DCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake" --preset ${{ matrix.config.preset }}'
       - name: Remove buildtrees from cache
         uses: JesseTG/rm@v1.0.3
         with:
-          path: ${{ matrix.config.vcpkg-dir }}/buildtrees
+          path: vcpkg/buildtrees
       - name: Remove downloads from cache
         uses: JesseTG/rm@v1.0.3
         with:
-          path: ${{ matrix.config.vcpkg-dir }}/downloads
+          path: vcpkg/downloads
       - name: Archive build
         uses: actions/upload-artifact@v5
         with:
