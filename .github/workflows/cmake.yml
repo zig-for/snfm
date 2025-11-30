@@ -39,7 +39,7 @@ jobs:
         if: ${{ contains(matrix.config.os, 'macos') || contains(matrix.config.os, 'osx') }} 
       - name: Install Mono
         shell: pwsh
-        run: winget install -e --id Mono.Mono --force
+        run: winget install -e --id Mono.Mono --silent
         if: ${{ contains(matrix.config.os, 'windows') }}
       - name: Download vcpkg
         uses: actions/checkout@v6
@@ -59,7 +59,7 @@ jobs:
         run: |
           ${{ github.workspace }}/vcpkg/bootstrap-vcpkg.bat
       - name: Add NuGet sources
-        if: ${{ contains(matrix.config.os, 'windows') }}
+        if: ${{ ! contains(matrix.config.os, 'windows') }}
         shell: bash
         env: 
           VCPKG_EXE: ${{ github.workspace }}/vcpkg/vcpkg
@@ -77,7 +77,7 @@ jobs:
             setapikey "${{ secrets.GITHUB_TOKEN }}" \
             -Source "${{ env.FEED_URL }}"
       - name: Add NuGet sources
-        if: ${{ ! contains(matrix.config.os, 'windows') }}
+        if: ${{ contains(matrix.config.os, 'windows') }}
 
         shell: pwsh
         run: |
