@@ -32,6 +32,7 @@ jobs:
     runs-on: ${{ matrix.config.os }}
     continue-on-error: true
     steps:
+      - run: clang --version
       - uses: actions/checkout@v2
         with:
           submodules: true
