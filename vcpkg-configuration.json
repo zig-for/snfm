@@ -1,0 +1,18 @@
+{
+  "default-registry": {
+    "kind": "git",
+    "baseline": "3af1d1e60af2b2abf55760538cd607829029b07a",
+    "repository": "https://github.com/microsoft/vcpkg"
+  },
+  "registries": [
+    {
+      "kind": "artifact",
+      "location": "https://github.com/microsoft/vcpkg-ce-catalog/archive/refs/heads/main.zip",
+      "name": "microsoft"
+    }
+  ],
+  "requires": {
+    "microsoft:tools/kitware/cmake": "* 3.25.2",
+    "microsoft:tools/ninja-build/ninja": "* 1.10.2"
+  }
+}

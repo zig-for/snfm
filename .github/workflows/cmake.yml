@@ -33,10 +33,9 @@ jobs:
         if: ${{ contains(matrix.config.os, 'ubuntu') }}
       - run: brew install pkg-config protobuf grpc
         if: ${{ contains(matrix.config.os, 'macos') || contains(matrix.config.os, 'osx') }} 
-      - name: Bootstrap vcpkg?
+      - name: Bootstrap vcpkg
         run: . <(curl https://aka.ms/vcpkg-init.sh -L)
       - run: vcpkg activate
-      - run: vcpkg use clang cmake ninja
     
       # Install latest CMake.
       # - uses: lukka/get-cmake@v4.2.0
