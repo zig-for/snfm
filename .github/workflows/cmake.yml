@@ -14,6 +14,8 @@ env:
   BUILD_TYPE: Release
   FEED_URL: https://nuget.pkg.github.com/zig-for/index.json
   VCPKG_BINARY_SOURCES: "clear;nuget,https://nuget.pkg.github.com/zig-for/index.json,readwrite"
+  VCPKG_EXE: ${{ github.workspace }}/vcpkg/vcpkg
+
 jobs:
   build:
     strategy:
@@ -37,7 +39,7 @@ jobs:
         if: ${{ contains(matrix.config.os, 'macos') || contains(matrix.config.os, 'osx') }} 
       - name: Install Mono
         shell: pwsh
-        run: winget install -e --id Mono.Mono -y
+        run: winget install -e --id Mono.Mono --force
         if: ${{ contains(matrix.config.os, 'windows') }}
       - name: Download vcpkg
         uses: actions/checkout@v6
