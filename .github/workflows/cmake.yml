@@ -36,7 +36,7 @@ jobs:
       
       - uses: actions/checkout@v6
         with:
-          repository: 'git@github.com:microsoft/vcpkg.git'
+          repository: 'https://github.com/microsoft/vcpkg/'
           # TODO: pull forward
           ref: 'c168ce4e765409509c9c482faa0468c4e1ab386b'
           path: vcpkg
