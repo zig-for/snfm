@@ -87,7 +87,7 @@ jobs:
 
       - run: vcpkg/vcpkg fetch ninja
       - run: cmake -B build -S . '-DCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake' --preset '${{ matrix.config.preset }}'
-      - run: ls -al out
+      - run: ls -al .
       - name: Archive build
         uses: actions/upload-artifact@v5
         with:
