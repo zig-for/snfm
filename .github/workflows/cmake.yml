@@ -90,8 +90,8 @@ jobs:
             -Source "${{ env.FEED_URL }}"
 
       - run: vcpkg/vcpkg fetch ninja
-      - run: cmake --preset '${{ matrix.config.preset }}'
-      - run: cmake --build out/build/${{ matrix.config.preset }}  -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
+      - run: cmake --preset '${{ matrix.config.preset }}' -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
+      - run: cmake --build out/build/${{ matrix.config.preset }} 
       - run: find .. -name snfm_user_manual.md  
       - name: Archive build
         uses: actions/upload-artifact@v5
