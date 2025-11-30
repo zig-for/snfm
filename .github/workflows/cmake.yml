@@ -39,7 +39,7 @@ jobs:
         if: ${{ contains(matrix.config.os, 'macos') || contains(matrix.config.os, 'osx') }} 
       - name: Install Mono
         shell: pwsh
-        run: winget install -e --id Mono.Mono --silent
+        run: winget install -e --id Mono.Mono --silent --accept-source-agreements
         if: ${{ contains(matrix.config.os, 'windows') }}
       - name: Download vcpkg
         uses: actions/checkout@v6
@@ -72,9 +72,9 @@ jobs:
             -StorePasswordInClearText \
             -Name GitHubPackages \
             -UserName "${{ env.USERNAME }}" \
-            -Password "${{ secrets.GITHUB_TOKEN }}"
+            -Password "${{ secrets.VCPKG_PAT_TOKEN }}"
           mono `${{ env.VCPKG_EXE }} fetch nuget | tail -n 1` \
-            setapikey "${{ secrets.GITHUB_TOKEN }}" \
+            setapikey "${{ secrets.VCPKG_PAT_TOKEN }}" \
             -Source "${{ env.FEED_URL }}"
       - name: Add NuGet sources
         if: ${{ contains(matrix.config.os, 'windows') }}
@@ -87,9 +87,9 @@ jobs:
             -StorePasswordInClearText `
             -Name GitHubPackages `
             -UserName "${{ env.USERNAME }}" `
-            -Password "${{ secrets.GITHUB_TOKEN }}"
+            -Password "${{ secrets.VCPKG_PAT_TOKEN }}"
           .$(${{ env.VCPKG_EXE }} fetch nuget) `
-            setapikey "${{ secrets.GITHUB_TOKEN }}" `
+            setapikey "${{ secrets.VCPKG_PAT_TOKEN }}" `
             -Source "${{ env.FEED_URL }}"
 
       - run: vcpkg/vcpkg fetch ninja
