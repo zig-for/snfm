@@ -16,7 +16,7 @@ env:
   FEED_URL: https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
   VCPKG_BINARY_SOURCES: "clear;nuget,GitHubPackages,readwrite"
   VCPKG_USE_NUGET_CACHE: true
-  VCPKG_EXE: ${{ github.workspace }}/vcpkg/vcpkg
+  VCPKG_EXE: vcpkg/vcpkg
 
 jobs:
   build:
@@ -56,8 +56,7 @@ jobs:
       - name: Bootstrap vcpkg
         if: runner.os == 'Windows'
         shell: pwsh
-        run: |
-          ${{ github.workspace }}/vcpkg/bootstrap-vcpkg.bat
+        run: ${{ github.workspace }}/vcpkg/bootstrap-vcpkg.bat
       - name: Add NuGet sources
         # if: ${{ ! contains(matrix.config.os, 'windows') }}
         shell: bash
