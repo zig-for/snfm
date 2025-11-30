@@ -36,13 +36,13 @@ jobs:
           submodules: true
       # TODO: figure out how to disable wxGL so we can get rid of freeglut
       - run: sudo apt-get update && sudo apt-get install pkg-config libgtk-3-dev libsecret-1-dev libgcrypt20-dev libsystemd-dev freeglut3-dev mono-complete
-        if: ${{ contains(matrix.config.os, 'ubuntu') }}
+        if: runner.os == 'Linux'
       - run: brew install pkg-config protobuf grpc mono
-        if: ${{ contains(matrix.config.os, 'macos') || contains(matrix.config.os, 'osx') }} 
+        if: runner.os == 'macOS'
       - name: Install Mono
         shell: pwsh
         run: winget install -e --id Mono.Mono --silent --accept-source-agreements
-        if: ${{ contains(matrix.config.os, 'windows') }}
+        if: runner.os == 'Windows'
       - name: Download vcpkg
         uses: actions/checkout@v6
         with:
@@ -50,18 +50,16 @@ jobs:
           ref: '5bf0c55239da398b8c6f450818c9e28d36bf9966'
           path: vcpkg
       - name: Bootstrap vcpkg
-        if: ${{ ! contains(matrix.config.os, 'windows') }}
+        if: runner.os != 'Windows'
         shell: bash
         run: ${{ github.workspace }}/vcpkg/bootstrap-vcpkg.sh
-
-
       - name: Bootstrap vcpkg
-        if: ${{ contains(matrix.config.os, 'windows') }}
+        if: runner.os == 'Windows'
         shell: pwsh
         run: |
           ${{ github.workspace }}/vcpkg/bootstrap-vcpkg.bat
       - name: Add NuGet sources
-        if: ${{ ! contains(matrix.config.os, 'windows') }}
+        # if: ${{ ! contains(matrix.config.os, 'windows') }}
         shell: bash
         run: |
           mono `${{ env.VCPKG_EXE }} fetch nuget | tail -n 1` \
@@ -74,20 +72,20 @@ jobs:
           mono `${{ env.VCPKG_EXE }} fetch nuget | tail -n 1` \
             setapikey "${{ secrets.VCPKG_PAT_TOKEN }}" \
             -Source "${{ env.FEED_URL }}"
-      - name: Add NuGet sources
-        if: ${{ contains(matrix.config.os, 'windows') }}
-        shell: pwsh
-        run: |
-          .$(${{ env.VCPKG_EXE }} fetch nuget) `
-            sources add `
-            -Source "${{ env.FEED_URL }}" `
-            -StorePasswordInClearText `
-            -Name GitHubPackages `
-            -UserName "${{ env.USERNAME }}" `
-            -Password "${{ secrets.GITHUB_TOKEN }}"
-          .$(${{ env.VCPKG_EXE }} fetch nuget) `
-            setapikey "${{ secrets.VCPKG_PAT_TOKEN }}" `
-            -Source "${{ env.FEED_URL }}"
+      # - name: Add NuGet sources
+      #   if: runner.os == 'Windows'
+      #   shell: pwsh
+      #   run: |
+      #     .$(${{ env.VCPKG_EXE }} fetch nuget) `
+      #       sources add `
+      #       -Source "${{ env.FEED_URL }}" `
+      #       -StorePasswordInClearText `
+      #       -Name GitHubPackages `
+      #       -UserName "${{ env.USERNAME }}" `
+      #       -Password "${{ secrets.GITHUB_TOKEN }}"
+      #     .$(${{ env.VCPKG_EXE }} fetch nuget) `
+      #       setapikey "${{ secrets.VCPKG_PAT_TOKEN }}" `
+      #       -Source "${{ env.FEED_URL }}"
 
       - run: vcpkg/vcpkg fetch ninja
       - run: cmake -B build -S . '-DCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake' --preset '${{ matrix.config.preset }}'
@@ -103,10 +101,7 @@ jobs:
             out/build/${{ matrix.config.preset }}/snfm_user_manual.md
             out/build/${{ matrix.config.preset }}/snfm_config_example.yaml
             out/build/macos*/
-      # - run: |
-      #     echo "RUNVCPKG_NO_CACHE=1" >> $GITHUB_ENV
-      #   if: ${{ failure() || cancelled() }}
-      #   shell: bash
+
   release:
     if: github.event_name == 'release'
     runs-on: ubuntu-latest
@@ -127,14 +122,17 @@ jobs:
       - name: Get artifact
         uses: actions/download-artifact@v6
         with:
+          name: snfm-macos-arm64-release
+          path: macos-arm64
+      - name: Get artifact
+        uses: actions/download-artifact@v6
+        with:
           name: snfm-macos-x64-release
-          path: macos
+          path: macos-x64
       - name: Fix +x
         run: |
-          chmod +x linux/send_file
-          chmod +x linux/manage_files
-          chmod +x macos/send_file
-          chmod +x macos/manage_files
+          chmod +x */send_file
+          chmod +x */manage_files
 
       - name: Archive Release
         uses: thedoctor0/zip-release@main
@@ -175,3 +173,10 @@ jobs:
           overwrite: true
           asset_name: snfm-$tag-macos-x64.zip
           file: snfm-macos-x64-release.zip
+      - name: Upload binaries to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          tag: ${{ env.GITHUB_REF_SLUG }}
+          overwrite: true
+          asset_name: snfm-$tag-macos-arm64.zip
+          file: snfm-macos-arm64-release.zip
