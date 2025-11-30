@@ -94,12 +94,12 @@ jobs:
         with:
           name: snfm-${{ matrix.config.preset }}
           path: |
-            build/out/manage_files.exe
-            build/out/send_file.exe
-            build/out/manage_files
-            build/out/send_file
-            build/out/snfm_user_manual.md
-            build/out/snfm_config_example.yaml
+            out/build/manage_files.exe
+            out/build/send_file.exe
+            out/build/manage_files
+            out/build/send_file
+            out/build/snfm_user_manual.md
+            out/build/snfm_config_example.yaml
 
   release:
     if: github.event_name == 'release'
