@@ -17,6 +17,7 @@ env:
   VCPKG_BINARY_SOURCES: "clear;nuget,GitHubPackages,readwrite;nugettimeout,3600"
   VCPKG_USE_NUGET_CACHE: true
   VCPKG_EXE: vcpkg/vcpkg
+  VCPKG_ROOT: vcpkg
 
 jobs:
   build:
@@ -86,8 +87,8 @@ jobs:
             -Source "${{ env.FEED_URL }}"
 
       - run: vcpkg/vcpkg fetch ninja
-      - run: cmake -B build -S . '-DCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake' --preset '${{ matrix.config.preset }}'
-      - run: find .. -name snfm_user_manual.md
+      - run: cmake --preset '${{ matrix.config.preset }}'
+      - run: find .. -name snfm_user_manual.md  
       - name: Archive build
         uses: actions/upload-artifact@v5
         with:
