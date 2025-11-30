@@ -12,7 +12,6 @@ permissions:
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Release
-  VCPKG_EXE: ${{ github.workspace }}/vcpkg/vcpkg
   FEED_URL: https://nuget.pkg.github.com/zig-for/index.json
   VCPKG_BINARY_SOURCES: "clear;nuget,https://nuget.pkg.github.com/zig-for/index.json,readwrite"
 jobs:
@@ -36,7 +35,15 @@ jobs:
         if: ${{ contains(matrix.config.os, 'ubuntu') }}
       - run: brew install pkg-config protobuf grpc mono
         if: ${{ contains(matrix.config.os, 'macos') || contains(matrix.config.os, 'osx') }} 
+      - name: Install Mono
+        shell: pwsh
+        run: winget install -e --id Mono.Mono
+        if: ${{ contains(matrix.config.os, 'windows')
 
+      - name: Bootstrap vcpkg
+        if: ${{ ! contains(matrix.config.os, 'windows') }}
+        shell: bash
+        run: ${{ github.workspace }}/vcpkg/bootstrap-vcpkg.sh
       - name: Download vcpkg
         uses: actions/checkout@v6
         with:
@@ -83,10 +90,6 @@ jobs:
             setapikey "${{ secrets.GITHUB_TOKEN }}" `
             -Source "${{ env.FEED_URL }}"
 
-      - name: Bootstrap vcpkg
-        if: ${{ ! contains(matrix.config.os, 'windows') }}
-        shell: bash
-        run: ${{ github.workspace }}/vcpkg/bootstrap-vcpkg.sh
       - run: vcpkg/vcpkg fetch ninja
       - run: cmake -B build -S . '-DCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake' --preset '${{ matrix.config.preset }}'
       - name: Archive build
