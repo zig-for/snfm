@@ -32,7 +32,7 @@ jobs:
         with:
           submodules: true
       # TODO: figure out how to disable wxGL so we can get rid of freeglut
-      - run: sudo apt-get update && sudo apt-get install pkg-config libgtk-3-dev libsecret-1-dev libgcrypt20-dev libsystemd-dev freeglut3-dev
+      - run: sudo apt-get update && sudo apt-get install pkg-config libgtk-3-dev libsecret-1-dev libgcrypt20-dev libsystemd-dev freeglut3-dev mono-complete
         if: ${{ contains(matrix.config.os, 'ubuntu') }}
       - run: brew install pkg-config protobuf grpc mono
         if: ${{ contains(matrix.config.os, 'macos') || contains(matrix.config.os, 'osx') }} 
@@ -57,15 +57,6 @@ jobs:
         run: ${{ github.workspace }}/vcpkg/bootstrap-vcpkg.sh
       - run: vcpkg/vcpkg fetch ninja
       - run: cmake -B build -S . '-DCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake' --preset '${{ matrix.config.preset }}'
-
-      - name: Remove buildtrees from cache
-        uses: JesseTG/rm@v1.0.3
-        with:
-          path: vcpkg/buildtrees
-      - name: Remove downloads from cache
-        uses: JesseTG/rm@v1.0.3
-        with:
-          path: vcpkg/downloads
       - name: Archive build
         uses: actions/upload-artifact@v5
         with:
@@ -77,10 +68,10 @@ jobs:
             out/build/${{ matrix.config.preset }}/send_file
             out/build/${{ matrix.config.preset }}/snfm_user_manual.md
             out/build/${{ matrix.config.preset }}/snfm_config_example.yaml
-      - run: |
-          echo "RUNVCPKG_NO_CACHE=1" >> $GITHUB_ENV
-        if: ${{ failure() || cancelled() }}
-        shell: bash
+      # - run: |
+      #     echo "RUNVCPKG_NO_CACHE=1" >> $GITHUB_ENV
+      #   if: ${{ failure() || cancelled() }}
+      #   shell: bash
   release:
     if: github.event_name == 'release'
     runs-on: ubuntu-latest
