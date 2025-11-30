@@ -33,16 +33,16 @@ jobs:
         if: ${{ contains(matrix.config.os, 'ubuntu') }}
       - run: brew install pkg-config protobuf grpc
         if: ${{ contains(matrix.config.os, 'macos') || contains(matrix.config.os, 'osx') }} 
-      - name: Bootstrap vcpkg
-        if: ${{ ! contains(matrix.config.os, 'windows') }}
-        run: . <(curl https://aka.ms/vcpkg-init.sh -L)
-      - name: Bootstrap vcpkg
-        unless: ${{ ! contains(matrix.config.os, 'windows') }}
-        run: iex (iwr -useb https://aka.ms/vcpkg-init.ps1)
-      - run: vcpkg-shell activate
-    
+      - name: Download vcpkg
+        uses: actions/checkout@v6
+        with:
+          repository: 'microsoft/vcpkg'
+          # TODO: pull forward
+          ref: 'c168ce4e765409509c9c482faa0468c4e1ab386b'
+          path: vcpkg
+
       # Install latest CMake.
-      # - uses: lukka/get-cmake@v4.2.0
+      - uses: lukka/get-cmake@v4.2.0
       - name: Run CMake consuming CMakePreset.json and vcpkg.json by mean of vcpkg.
         uses: lukka/run-cmake@v10
         with:
