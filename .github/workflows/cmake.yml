@@ -7,7 +7,8 @@ on:
     branches: [ "main" ]
   release:
     types: [ published ]
-
+permissions:
+  packages: write
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Release
@@ -16,10 +17,10 @@ jobs:
     strategy:
       matrix:
         config:
-          - { os: windows-latest, preset: windows-x64-release, vcpkg-dir: 'C:/lukka-vcpkg' }
-          - { os: ubuntu-20.04, preset: linux-x64-release, vcpkg-dir: '/tmp/lukka-vcpkg' }
-          - { os: macos-latest, preset: macos-x64-release, vcpkg-dir: '/tmp/lukka-vcpkg' }
-          - { os: macos-latest, preset: macos-arm64-release, vcpkg-dir: '/tmp/lukka-vcpkg' }
+          - { os: windows-latest, preset: windows-x64-release, vcpkg-dir: 'C:/vcpkg' }
+          - { os: ubuntu-20.04, preset: linux-x64-release, vcpkg-dir: '/tmp/vcpkg' }
+          - { os: macos-latest, preset: macos-x64-release, vcpkg-dir: '/tmp/vcpkg' }
+          - { os: macos-latest, preset: macos-arm64-release, vcpkg-dir: '/tmp/vcpkg' }
   
     runs-on: ${{ matrix.config.os }}
     continue-on-error: true
@@ -32,31 +33,19 @@ jobs:
         if: ${{ contains(matrix.config.os, 'ubuntu') }}
       - run: brew install pkg-config protobuf grpc
         if: ${{ contains(matrix.config.os, 'macos') || contains(matrix.config.os, 'osx') }} 
-
-
-      - run: mkdir ${{ matrix.config.vcpkg-dir }}
+      
+      - uses: actions/checkout@v6
+        with:
+          repository: 'git@github.com:microsoft/vcpkg.git'
+          # TODO: pull forward
+          ref: 'c168ce4e765409509c9c482faa0468c4e1ab386b'
+          path: ${{ matrix.config.vcpkg-dir }}
+    
       # Install latest CMake.
       - uses: lukka/get-cmake@v4.2.0
-      - name: Restore artifacts, or setup vcpkg (do not install any package)
-        uses: lukka/run-vcpkg@v11.5
-        with:
-          vcpkgDirectory: ${{ matrix.config.vcpkg-dir }}
-          # If not using a submodule for vcpkg sources, this specifies which commit
-          # id must be checkout from a Git repo. It must not set if using a submodule
-          # for vcpkg.
-          vcpkgGitCommitId: 'c168ce4e765409509c9c482faa0468c4e1ab386b'
-
-          # This is the glob expression used to locate the vcpkg.json and add its
-          # hash to the cache key. Change it to match a single manifest file you want
-          # to use.
-          # vcpkgJsonGlob: '**/vcpkg.json'
-
-          # This is needed to run `vcpkg install` command (after vcpkg is built) in
-          # the directory where vcpkg.json has been located. Default is false,
-          # It is highly suggested to let `run-cmake` to run vcpkg (i.e. `false`)
-          # (i.e. let CMake run `vcpkg install`) using the vcpkg.cmake toolchain.
-          # runVcpkgInstall: true
-
+      - name: Bootstrap vcpkg
+        shell: bash
+        run: ${{ matrix.config.vcpkg-dir }}/vcpkg/bootstrap-vcpkg.sh
       - name: Run CMake consuming CMakePreset.json and vcpkg.json by mean of vcpkg.
         uses: lukka/run-cmake@v10
         with:
