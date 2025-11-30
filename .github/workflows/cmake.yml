@@ -44,8 +44,7 @@ jobs:
           path: vcpkg
 
       # Install latest CMake.
-      - uses: lukka/get-cmake@v4.2.0
-      - run: cmake -B build -S . "-DCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake" --preset ${{ matrix.config.preset }}'
+      - run: cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake --preset '${{ matrix.config.preset }}'
       - name: Remove buildtrees from cache
         uses: JesseTG/rm@v1.0.3
         with:
