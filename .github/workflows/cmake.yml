@@ -44,6 +44,9 @@ jobs:
         shell: pwsh
         run: winget install -e --id Mono.Mono --silent --accept-source-agreements
         if: runner.os == 'Windows'
+      - uses: ilammy/msvc-dev-cmd@v1
+        if: runner.os == 'Windows'
+
       - name: Download vcpkg
         uses: actions/checkout@v6
         with:
