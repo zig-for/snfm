@@ -35,6 +35,7 @@ jobs:
         if: ${{ contains(matrix.config.os, 'macos') || contains(matrix.config.os, 'osx') }} 
       - name: Bootstrap vcpkg
         run: . <(curl https://aka.ms/vcpkg-init.sh -L)
+        shell: bash
       - run: vcpkg activate
     
       # Install latest CMake.
