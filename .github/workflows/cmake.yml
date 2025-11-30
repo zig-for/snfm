@@ -17,10 +17,10 @@ jobs:
     strategy:
       matrix:
         config:
-          - { os: windows-latest, preset: windows-x64-release, vcpkg-dir: 'C:/vcpkg' }
-          - { os: ubuntu-20.04, preset: linux-x64-release, vcpkg-dir: '/tmp/vcpkg' }
-          - { os: macos-latest, preset: macos-x64-release, vcpkg-dir: '/tmp/vcpkg' }
-          - { os: macos-latest, preset: macos-arm64-release, vcpkg-dir: '/tmp/vcpkg' }
+          - { os: windows-latest, preset: windows-x64-release }
+          - { os: ubuntu-20.04, preset: linux-x64-release }
+          - { os: macos-latest, preset: macos-x64-release }
+          - { os: macos-latest, preset: macos-arm64-release }
   
     runs-on: ${{ matrix.config.os }}
     continue-on-error: true
@@ -39,13 +39,13 @@ jobs:
           repository: 'git@github.com:microsoft/vcpkg.git'
           # TODO: pull forward
           ref: 'c168ce4e765409509c9c482faa0468c4e1ab386b'
-          path: ${{ matrix.config.vcpkg-dir }}
+          path: vcpkg
     
       # Install latest CMake.
       - uses: lukka/get-cmake@v4.2.0
       - name: Bootstrap vcpkg
         shell: bash
-        run: ${{ matrix.config.vcpkg-dir }}/vcpkg/bootstrap-vcpkg.sh
+        run: vcpkg/bootstrap-vcpkg.sh
       - name: Run CMake consuming CMakePreset.json and vcpkg.json by mean of vcpkg.
         uses: lukka/run-cmake@v10
         with:
