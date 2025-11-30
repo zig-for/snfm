@@ -253,7 +253,7 @@ wxDragResult SNFileTree::OnDragOver(wxCoord 	x,
     }
     else
     {
-#if !WIN32
+#if !_WIN32
         // Linux has a bug where the highlight goes invalid, no idea why
         SetItemDropHighlightHack(GetRootItem());
 #endif

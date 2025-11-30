@@ -122,7 +122,7 @@ FileManagerFrame::FileManagerFrame(const wxString& title, const wxPoint& pos, co
 
     wxImageList* icons = new wxImageList(folder.GetWidth(), folder.GetHeight(), false, 4);
     
-#if WIN32
+#if _WIN32
     icons->Add(GetSystemIcon(SystemIcon::FOLDER));
     icons->Add(GetSystemIcon(SystemIcon::OPEN_FOLDER));
 #else

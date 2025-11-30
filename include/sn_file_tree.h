@@ -1,5 +1,5 @@
 ﻿#pragma once
-#ifdef WIN32
+#ifdef _WIN32
 #define WIN_DROP_SOURCE
 #endif
 #ifdef WIN_DROP_SOURCE
@@ -168,7 +168,7 @@ private:
             return 1;
         }
         int c =
-#ifdef WIN32
+#ifdef _WIN32
             strcmpi
 #else
             strcasecmp

@@ -20,7 +20,7 @@ enum class SystemIcon
 
 inline wxIcon GetSystemIcon(SystemIcon index)
 {
-#if WIN32
+#if _WIN32
 
     HICON hicon;
     wxIcon icon;

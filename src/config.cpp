@@ -1,8 +1,8 @@
 #include <config.h>
 #include <iostream>
 #include <string_view>
-//#include <ranges>
-#ifdef WIN32
+
+#ifdef _WIN32
 #include <shlwapi.h>
 bool globMatch(const char* pattern, const char* s) {
     return PathMatchSpecA(s, pattern);
@@ -87,7 +87,7 @@ std::optional<std::filesystem::path> FindExistingConfigFile(const std::filesyste
     std::vector<std::filesystem::path> dirs = {
         pwd
     };
-#if WIN32
+#if _WIN32
     dirs.push_back(std::filesystem::path(std::getenv("LOCALAPPDATA")) / "snfm");
 #else
     const char* xdg_config_dirs = std::getenv("XDG_CONFIG_DIRS");
