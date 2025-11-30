@@ -18,7 +18,7 @@ find_package(yaml-cpp REQUIRED)
 set(wxWidgets_USE_DEBUG OFF)
 # Workaround issue where wxwidgets can't find a release only build with the above flag
 message(STATUS "WXWIDGETS DIR " ${wxWidgets_LIB_DIR})
-IF(CMAKE_BUILD_TYPE MATCHES "Release")
+if(CMAKE_BUILD_TYPE MATCHES "Release")
   set(wxWidgets_LIB_DIR ${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib)
 endif()
 message(STATUS "new WXWIDGETS DIR " ${wxWidgets_LIB_DIR})
@@ -133,4 +133,5 @@ add_custom_command(
 TARGET send_file POST_BUILD
 COMMAND ${CMAKE_COMMAND} -E copy
         ${CMAKE_SOURCE_DIR}/snfm_user_manual.md
+
         ${CMAKE_CURRENT_BINARY_DIR}/snfm_user_manual.md)
