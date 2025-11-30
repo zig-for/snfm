@@ -88,6 +88,7 @@ jobs:
 
       - run: vcpkg/vcpkg fetch ninja
       - run: cmake --preset '${{ matrix.config.preset }}'
+      - run: cmake --build out/build/${{ matrix.config.preset }}
       - run: find .. -name snfm_user_manual.md  
       - name: Archive build
         uses: actions/upload-artifact@v5
