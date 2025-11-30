@@ -33,7 +33,8 @@ jobs:
         if: ${{ contains(matrix.config.os, 'ubuntu') }}
       - run: brew install pkg-config protobuf grpc
         if: ${{ contains(matrix.config.os, 'macos') || contains(matrix.config.os, 'osx') }} 
-      
+      - name: Bootstrap vcpkg?
+        run: . <(curl https://aka.ms/vcpkg-init.sh -L)
       - name: Download vcpkg
         uses: actions/checkout@v6
         with:
