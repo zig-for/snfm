@@ -35,19 +35,11 @@ jobs:
         if: ${{ contains(matrix.config.os, 'macos') || contains(matrix.config.os, 'osx') }} 
       - name: Bootstrap vcpkg?
         run: . <(curl https://aka.ms/vcpkg-init.sh -L)
-      - name: Download vcpkg
-        uses: actions/checkout@v6
-        with:
-          repository: 'microsoft/vcpkg'
-          # TODO: pull forward
-          ref: 'c168ce4e765409509c9c482faa0468c4e1ab386b'
-          path: vcpkg
+      - run: vcpkg activate
+      - run: vcpkg use clang cmake ninja
     
       # Install latest CMake.
-      - uses: lukka/get-cmake@v4.2.0
-      - name: Bootstrap vcpkg
-        shell: bash
-        run: vcpkg/bootstrap-vcpkg.sh
+      # - uses: lukka/get-cmake@v4.2.0
       - name: Run CMake consuming CMakePreset.json and vcpkg.json by mean of vcpkg.
         uses: lukka/run-cmake@v10
         with:
