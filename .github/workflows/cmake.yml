@@ -87,18 +87,18 @@ jobs:
 
       - run: vcpkg/vcpkg fetch ninja
       - run: cmake -B build -S . '-DCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake' --preset '${{ matrix.config.preset }}'
-      - run: find build
+      - run: find .. -name snfm_user_manual.md
       - name: Archive build
         uses: actions/upload-artifact@v5
         with:
           name: snfm-${{ matrix.config.preset }}
           path: |
-            out/build/${{ matrix.config.preset }}/manage_files.exe
-            out/build/${{ matrix.config.preset }}/send_file.exe
-            out/build/${{ matrix.config.preset }}/manage_files
-            out/build/${{ matrix.config.preset }}/send_file
-            out/build/${{ matrix.config.preset }}/snfm_user_manual.md
-            out/build/${{ matrix.config.preset }}/snfm_config_example.yaml
+            build/vcpkg_installed/manage_files.exe
+            build/vcpkg_installed/send_file.exe
+            build/vcpkg_installed/manage_files
+            build/vcpkg_installed/send_file
+            build/vcpkg_installed/snfm_user_manual.md
+            build/vcpkg_installed/snfm_config_example.yaml
 
   release:
     if: github.event_name == 'release'
