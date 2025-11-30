@@ -2,9 +2,10 @@
 cmake_minimum_required(VERSION 3.22)
 
 cmake_policy(SET CMP0091 NEW)
-set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
 if(DEFINED VCPKG_HOST_TRIPLET AND NOT VCPKG_HOST_TRIPLET STREQUAL "")
-set(gRPC_BUILD_CODEGEN OFF)
+  set(gRPC_BUILD_CODEGEN OFF)
 endif()
 
 project(snfm)
@@ -18,7 +19,7 @@ set(wxWidgets_USE_DEBUG OFF)
 # Workaround issue where wxwidgets can't find a release only build with the above flag
 message(STATUS "WXWIDGETS DIR " ${wxWidgets_LIB_DIR})
 IF(CMAKE_BUILD_TYPE MATCHES "Release")
-set(wxWidgets_LIB_DIR ${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib)
+  set(wxWidgets_LIB_DIR ${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib)
 endif()
 message(STATUS "new WXWIDGETS DIR " ${wxWidgets_LIB_DIR})
 find_package(wxWidgets REQUIRED COMPONENTS core base)
@@ -116,6 +117,7 @@ target_link_libraries(manage_files PRIVATE ${wxWidgets_LIBRARIES})
 
 if(WIN32)
     # Magic bits to enable MFC
+    add_definitions(-D_AFXDLL)
     set(CMAKE_MFC_FLAG 2)
     set_target_properties(manage_files PROPERTIES WIN32_EXECUTABLE TRUE)
 endif()

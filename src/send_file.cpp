@@ -17,7 +17,6 @@ int main(int argc, char* argv[])
     auto maybePath = FindExistingConfigFile(std::filesystem::path(argv[0]).parent_path());
     Config config;
     if (maybePath) {
-        std::optional<Config> config;
         try {
             config = LoadConfig(*maybePath);
         }

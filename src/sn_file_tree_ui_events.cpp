@@ -121,7 +121,7 @@ void SNFileTree::OnContextMenuSelected(wxCommandEvent& event)
             return;
         }
         wxArrayString filenames;
-        openFileDialog.GetFilenames(filenames);
+        openFileDialog.GetPaths(filenames);
         ImportFilesTo(GetFocusedItem(), filenames);
     }
     break;
