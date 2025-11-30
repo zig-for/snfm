@@ -37,6 +37,18 @@ jobs:
       - run: brew install pkg-config protobuf grpc mono
         if: ${{ contains(matrix.config.os, 'macos') || contains(matrix.config.os, 'osx') }} 
 
+      - name: Download vcpkg
+        uses: actions/checkout@v6
+        with:
+          repository: 'microsoft/vcpkg'
+          ref: '5bf0c55239da398b8c6f450818c9e28d36bf9966'
+          path: vcpkg
+
+      - name: Bootstrap vcpkg
+        if: ${{ contains(matrix.config.os, 'windows') }}
+        shell: pwsh
+        run: |
+          ${{ github.workspace }}/vcpkg/bootstrap-vcpkg.bat
       - name: Add NuGet sources
         if: ${{ contains(matrix.config.os, 'windows') }}
         shell: bash
@@ -71,18 +83,6 @@ jobs:
             setapikey "${{ secrets.GITHUB_TOKEN }}" `
             -Source "${{ env.FEED_URL }}"
 
-      - name: Download vcpkg
-        uses: actions/checkout@v6
-        with:
-          repository: 'microsoft/vcpkg'
-          ref: '5bf0c55239da398b8c6f450818c9e28d36bf9966'
-          path: vcpkg
-
-      - name: Bootstrap vcpkg
-        if: ${{ contains(matrix.config.os, 'windows') }}
-        shell: pwsh
-        run: |
-          ${{ github.workspace }}/vcpkg/bootstrap-vcpkg.bat
       - name: Bootstrap vcpkg
         if: ${{ ! contains(matrix.config.os, 'windows') }}
         shell: bash
