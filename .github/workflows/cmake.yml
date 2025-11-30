@@ -37,19 +37,19 @@ jobs:
         if: ${{ contains(matrix.config.os, 'macos') || contains(matrix.config.os, 'osx') }} 
       - name: Install Mono
         shell: pwsh
-        run: winget install -e --id Mono.Mono
+        run: winget install -e --id Mono.Mono -y
         if: ${{ contains(matrix.config.os, 'windows') }}
-
-      - name: Bootstrap vcpkg
-        if: ${{ ! contains(matrix.config.os, 'windows') }}
-        shell: bash
-        run: ${{ github.workspace }}/vcpkg/bootstrap-vcpkg.sh
       - name: Download vcpkg
         uses: actions/checkout@v6
         with:
           repository: 'microsoft/vcpkg'
           ref: '5bf0c55239da398b8c6f450818c9e28d36bf9966'
           path: vcpkg
+      - name: Bootstrap vcpkg
+        if: ${{ ! contains(matrix.config.os, 'windows') }}
+        shell: bash
+        run: ${{ github.workspace }}/vcpkg/bootstrap-vcpkg.sh
+
 
       - name: Bootstrap vcpkg
         if: ${{ contains(matrix.config.os, 'windows') }}
