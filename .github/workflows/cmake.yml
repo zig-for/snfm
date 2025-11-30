@@ -26,8 +26,8 @@ jobs:
         config:
           - { os: windows-latest, preset: windows-x64-release }
           - { os: ubuntu-24.04, preset: linux-x64-release }
-          - { os: macos-latest, preset: macos-x64-release }
-          - { os: macos-15-intel, preset: macos-arm64-release }
+          - { os: macos-15-intel, preset: macos-x64-release }
+          - { os: macos-latest, preset: macos-arm64-release }
   
     runs-on: ${{ matrix.config.os }}
     continue-on-error: true
