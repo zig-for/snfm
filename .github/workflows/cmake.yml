@@ -34,8 +34,11 @@ jobs:
       - run: brew install pkg-config protobuf grpc
         if: ${{ contains(matrix.config.os, 'macos') || contains(matrix.config.os, 'osx') }} 
       - name: Bootstrap vcpkg
+        if: ${{ ! contains(matrix.config.os, 'windows') }}
         run: . <(curl https://aka.ms/vcpkg-init.sh -L)
-        shell: bash
+      - name: Bootstrap vcpkg
+        unless: ${{ ! contains(matrix.config.os, 'windows') }}
+        run: iex (iwr -useb https://aka.ms/vcpkg-init.ps1)
       - run: vcpkg-shell activate
     
       # Install latest CMake.
