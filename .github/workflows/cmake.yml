@@ -13,7 +13,7 @@ env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Release
   FEED_URL: https://nuget.pkg.github.com/zig-for/index.json
-  VCPKG_BINARY_SOURCES: "clear;nuget,https://nuget.pkg.github.com/zig-for/index.json,readwrite"
+  VCPKG_BINARY_SOURCES: ";nuget,https://nuget.pkg.github.com/zig-for/index.json,readwrite"
   VCPKG_EXE: ${{ github.workspace }}/vcpkg/vcpkg
 
 jobs:
@@ -72,7 +72,7 @@ jobs:
             -StorePasswordInClearText \
             -Name GitHubPackages \
             -UserName "${{ env.USERNAME }}" \
-            -Password "${{ secrets.VCPKG_PAT_TOKEN }}"
+            -Password "${{ secrets.GITHUB_TOKEN }}"
           mono `${{ env.VCPKG_EXE }} fetch nuget | tail -n 1` \
             setapikey "${{ secrets.VCPKG_PAT_TOKEN }}" \
             -Source "${{ env.FEED_URL }}"
@@ -87,7 +87,7 @@ jobs:
             -StorePasswordInClearText `
             -Name GitHubPackages `
             -UserName "${{ env.USERNAME }}" `
-            -Password "${{ secrets.VCPKG_PAT_TOKEN }}"
+            -Password "${{ secrets.GITHUB_TOKEN }}"
           .$(${{ env.VCPKG_EXE }} fetch nuget) `
             setapikey "${{ secrets.VCPKG_PAT_TOKEN }}" `
             -Source "${{ env.FEED_URL }}"
