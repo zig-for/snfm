@@ -63,10 +63,6 @@ jobs:
       - name: Add NuGet sources
         if: ${{ ! contains(matrix.config.os, 'windows') }}
         shell: bash
-        env: 
-          VCPKG_EXE: ${{ github.workspace }}/vcpkg/vcpkg
-          USERNAME: <OWNER>
-          FEED_URL: https://nuget.pkg.github.com/<OWNER>/index.json
         run: |
           mono `${{ env.VCPKG_EXE }} fetch nuget | tail -n 1` \
             sources add \
@@ -80,7 +76,6 @@ jobs:
             -Source "${{ env.FEED_URL }}"
       - name: Add NuGet sources
         if: ${{ contains(matrix.config.os, 'windows') }}
-
         shell: pwsh
         run: |
           .$(${{ env.VCPKG_EXE }} fetch nuget) `
@@ -107,6 +102,7 @@ jobs:
             out/build/${{ matrix.config.preset }}/send_file
             out/build/${{ matrix.config.preset }}/snfm_user_manual.md
             out/build/${{ matrix.config.preset }}/snfm_config_example.yaml
+            out/build/macos*/
       # - run: |
       #     echo "RUNVCPKG_NO_CACHE=1" >> $GITHUB_ENV
       #   if: ${{ failure() || cancelled() }}
