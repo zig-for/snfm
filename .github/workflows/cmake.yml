@@ -13,6 +13,8 @@ env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Release
   VCPKG_EXE: ${{ github.workspace }}/vcpkg/vcpkg
+  FEED_URL: https://nuget.pkg.github.com/zig-for/index.json
+  VCPKG_BINARY_SOURCES: "clear;nuget,https://nuget.pkg.github.com/zig-for/index.json,readwrite"
 jobs:
   build:
     strategy:
@@ -26,8 +28,6 @@ jobs:
     runs-on: ${{ matrix.config.os }}
     continue-on-error: true
     steps:
-      - run: ninja --version
-      - run: cmake --version
       - uses: actions/checkout@v2
         with:
           submodules: true
@@ -48,7 +48,9 @@ jobs:
       - name: Bootstrap vcpkg
         if: ${{ contains(matrix.config.os, 'windows') }}
         shell: pwsh
-        run: ${{ github.workspace }}/vcpkg/bootstrap-vcpkg.bat
+        run: |
+          ${{ github.workspace }}/vcpkg/bootstrap-vcpkg.bat
+          $VCPKG_EXE fetch ninja
       - name: Bootstrap vcpkg
         if: ${{ ! contains(matrix.config.os, 'windows') }}
         shell: bash
