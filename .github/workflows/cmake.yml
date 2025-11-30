@@ -14,7 +14,7 @@ env:
   USERNAME: ${{ github.repository_owner }}
   BUILD_TYPE: Release
   FEED_URL: https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
-  VCPKG_BINARY_SOURCES: "clear;nuget,GitHubPackages,readwrite,nugettimeout,3600"
+  VCPKG_BINARY_SOURCES: "clear;nuget,GitHubPackages,readwrite;nugettimeout,3600"
   VCPKG_USE_NUGET_CACHE: true
   VCPKG_EXE: vcpkg/vcpkg
 
