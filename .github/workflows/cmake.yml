@@ -25,6 +25,7 @@ jobs:
     runs-on: ${{ matrix.config.os }}
     continue-on-error: true
     steps:
+      - run: ninja --version
       - uses: actions/checkout@v2
         with:
           submodules: true
