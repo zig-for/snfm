@@ -14,7 +14,7 @@ env:
   BUILD_TYPE: Release
   VCPKG_EXE: ${{ github.workspace }}/vcpkg/vcpkg
   FEED_URL: https://nuget.pkg.github.com/zig-for/index.json
-  VCPKG_BINARY_SOURCES: "clear;nuget,https://nuget.pkg.github.com/zig-for/index.json,readwrite"
+  # VCPKG_BINARY_SOURCES: "clear;nuget,https://nuget.pkg.github.com/zig-for/index.json,readwrite"
 jobs:
   build:
     strategy:
