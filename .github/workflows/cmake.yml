@@ -38,7 +38,7 @@ jobs:
       - name: Install Mono
         shell: pwsh
         run: winget install -e --id Mono.Mono
-        if: ${{ contains(matrix.config.os, 'windows')
+        if: ${{ contains(matrix.config.os, 'windows') }}
 
       - name: Bootstrap vcpkg
         if: ${{ ! contains(matrix.config.os, 'windows') }}
