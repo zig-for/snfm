@@ -58,8 +58,7 @@ jobs:
         shell: pwsh
         run: ${{ github.workspace }}/vcpkg/bootstrap-vcpkg.bat
       - name: Add NuGet sources
-        # if: ${{ ! contains(matrix.config.os, 'windows') }}
-        shell: bash
+        if: ${{ ! contains(matrix.config.os, 'windows') }}
         run: |
           mono `${{ env.VCPKG_EXE }} fetch nuget | tail -n 1` \
             sources add \
@@ -71,20 +70,20 @@ jobs:
           mono `${{ env.VCPKG_EXE }} fetch nuget | tail -n 1` \
             setapikey "${{ secrets.VCPKG_PAT_TOKEN }}" \
             -Source "${{ env.FEED_URL }}"
-      # - name: Add NuGet sources
-      #   if: runner.os == 'Windows'
-      #   shell: pwsh
-      #   run: |
-      #     .$(${{ env.VCPKG_EXE }} fetch nuget) `
-      #       sources add `
-      #       -Source "${{ env.FEED_URL }}" `
-      #       -StorePasswordInClearText `
-      #       -Name GitHubPackages `
-      #       -UserName "${{ env.USERNAME }}" `
-      #       -Password "${{ secrets.GITHUB_TOKEN }}"
-      #     .$(${{ env.VCPKG_EXE }} fetch nuget) `
-      #       setapikey "${{ secrets.VCPKG_PAT_TOKEN }}" `
-      #       -Source "${{ env.FEED_URL }}"
+      - name: Add NuGet sources
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          .$(${{ env.VCPKG_EXE }} fetch nuget) `
+            sources add `
+            -Source "${{ env.FEED_URL }}" `
+            -StorePasswordInClearText `
+            -Name GitHubPackages `
+            -UserName "${{ env.USERNAME }}" `
+            -Password "${{ secrets.GITHUB_TOKEN }}"
+          .$(${{ env.VCPKG_EXE }} fetch nuget) `
+            setapikey "${{ secrets.VCPKG_PAT_TOKEN }}" `
+            -Source "${{ env.FEED_URL }}"
 
       - run: vcpkg/vcpkg fetch ninja
       - run: cmake -B build -S . '-DCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake' --preset '${{ matrix.config.preset }}'
