@@ -34,9 +34,10 @@ jobs:
       - run: brew install pkg-config protobuf grpc
         if: ${{ contains(matrix.config.os, 'macos') || contains(matrix.config.os, 'osx') }} 
       
-      - uses: actions/checkout@v6
+      - name: download vcpkg
+        uses: actions/checkout@v6
         with:
-          repository: 'https://github.com/microsoft/vcpkg/'
+          repository: 'microsoft/vcpkg/'
           # TODO: pull forward
           ref: 'c168ce4e765409509c9c482faa0468c4e1ab386b'
           path: vcpkg
