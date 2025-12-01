@@ -91,6 +91,7 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR} include icons %)
 
 add_library(snfm_common ${PROTO_SRCS} ${PROTO_HDRS} ${PROTO_GRPC_SRCS} ${PROTO_GRPC_HDRS})
 target_link_libraries(snfm_common protobuf::libprotoc protobuf::libprotobuf gRPC::grpc++_unsecure)
+target_compile_definitions(snfm_common PUBLIC NOMINMAX)
 
 add_library(config "src/config.cpp")
 target_link_libraries(config PRIVATE yaml-cpp)
