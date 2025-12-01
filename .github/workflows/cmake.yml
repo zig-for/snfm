@@ -38,7 +38,7 @@ jobs:
       # TODO: figure out how to disable wxGL so we can get rid of freeglut
       - run: sudo apt-get update && sudo apt-get install libltdl-dev autoconf autoconf-archive automake libtool pkg-config libgtk-3-dev libsecret-1-dev libgcrypt20-dev libsystemd-dev freeglut3-dev mono-complete
         if: runner.os == 'Linux'
-      - run: brew install pkg-config protobuf grpc mono
+      - run: brew install pkg-config mono # protobuf grpc 
         if: runner.os == 'macOS'
       - name: Install Mono
         shell: pwsh
