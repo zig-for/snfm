@@ -112,8 +112,6 @@ if(WIN32)
   target_link_options(send_file PUBLIC "-Wl,-ignore:4221")
 endif()
 
-endif(WIN32)
-
 add_executable(manage_files WIN32 "src/sn_file_tree.cpp" "src/sn_file_tree_ui_events.cpp" "src/manage_files.cpp" "src/snfm.cpp")
 if(WIN32)
     target_sources(manage_files PRIVATE "src/win_dnd.cpp" "windows/manage_files.rc")
