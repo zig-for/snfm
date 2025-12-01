@@ -90,7 +90,7 @@ public:
         
         wxIcon exportIcon = GetSystemIcon(SystemIcon::EXPORT);
         wxImage importIcon;
-#if WIN32
+#if _WIN32
         importIcon = wxBitmap(exportIcon).ConvertToImage();
         importIcon = importIcon.Mirror(false);
         importIcon.RotateHue(0.66);
