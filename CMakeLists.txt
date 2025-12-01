@@ -143,6 +143,7 @@ COMMAND ${CMAKE_COMMAND} -E copy
 # https://github.com/microsoft/vcpkg/issues/25300
 # Remove -ignore:4221 from all INTERFACE_LINK_OPTIONS
 macro(get_all_targets_recursive targets dir)
+message("dir ${dir}")
     get_property(subdirectories DIRECTORY ${dir} PROPERTY SUBDIRECTORIES)
     foreach(subdir ${subdirectories})
         get_all_targets_recursive(${targets} ${subdir})
@@ -153,6 +154,7 @@ macro(get_all_targets_recursive targets dir)
         # get_target_property(target_type ${t} TYPE)
         # if (NOT ${target_type} STREQUAL "INTERFACE_LIBRARY" AND NOT ${target_type} STREQUAL "UTILITY")
             list(APPEND ${targets} ${t})
+            message("target ${t}")
         # endif()
     endforeach()
 endmacro()
