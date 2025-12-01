@@ -27,8 +27,8 @@
       "description": "Target Windows with the Visual Studio development environment.",
       "inherits": "base",
       "cacheVariables": {
-        "CMAKE_C_COMPILER": "cl.exe",
-        "CMAKE_CXX_COMPILER": "cl.exe",
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++",
         "VCPKG_TARGET_TRIPLET": "x64-windows-static"
       },
       "condition": {
