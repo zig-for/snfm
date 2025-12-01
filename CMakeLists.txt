@@ -109,7 +109,7 @@ target_link_libraries(send_file PRIVATE snfm_common config)
 if(WIN32)
   target_sources(send_file PRIVATE "windows/send_file.rc")
     # https://github.com/microsoft/vcpkg/issues/25300
-  target_link_options(send_file PUBLIC "-Wl,-ignore:4221")
+  # target_link_options(send_file PUBLIC "-Wl,-ignore:4221")
 endif()
 
 add_executable(manage_files WIN32 "src/sn_file_tree.cpp" "src/sn_file_tree_ui_events.cpp" "src/manage_files.cpp" "src/snfm.cpp")
@@ -127,7 +127,7 @@ if(WIN32)
     set(CMAKE_MFC_FLAG 2)
     set_target_properties(manage_files PROPERTIES WIN32_EXECUTABLE TRUE)
     # https://github.com/microsoft/vcpkg/issues/25300
-    target_link_options(manage_files PUBLIC "-Wl,-ignore:4221")
+    # target_link_options(manage_files PUBLIC "-Wl,-ignore:4221")
 endif()
 
 add_custom_command(
