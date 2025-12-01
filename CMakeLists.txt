@@ -144,10 +144,25 @@ COMMAND ${CMAKE_COMMAND} -E copy
 # Remove -ignore:4221 from all INTERFACE_LINK_OPTIONS
 get_property(_targets GLOBAL PROPERTY TARGETS)
 
+# foreach(t ${_targets})
+#     get_target_property(_opts ${t} INTERFACE_LINK_OPTIONS)
+#     if(_opts)
+#         list(REMOVE_ITEM _opts "-ignore:4221")
+#         set_property(TARGET ${t} PROPERTY INTERFACE_LINK_OPTIONS "${_opts}")
+#     endif()
+# endforeach()
+
+
 foreach(t ${_targets})
-    get_target_property(_opts ${t} INTERFACE_LINK_OPTIONS)
-    if(_opts)
-        list(REMOVE_ITEM _opts "-ignore:4221")
-        set_property(TARGET ${t} PROPERTY INTERFACE_LINK_OPTIONS "${_opts}")
+    get_target_property(_type ${t} TYPE)
+    if(NOT _type MATCHES "IMPORTED") 
+        continue()
     endif()
+
+    get_target_property(_lo  ${t} LINK_OPTIONS)
+    get_target_property(_ilo ${t} INTERFACE_LINK_OPTIONS)
+
+    message(STATUS "=== Imported: ${t} ===")
+    message(STATUS "  LINK_OPTIONS:            ${_lo}")
+    message(STATUS "  INTERFACE_LINK_OPTIONS:  ${_ilo}")
 endforeach()
