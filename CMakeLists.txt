@@ -156,7 +156,11 @@ macro(get_all_targets_recursive targets dir)
         # endif()
     endforeach()
 endmacro()
-
+function(get_all_targets var)
+    set(targets)
+    get_all_targets_recursive(targets ${CMAKE_CURRENT_SOURCE_DIR})
+    set(${var} ${targets} PARENT_SCOPE)
+endfunction()
 get_all_targets(all_targets)
 
 # foreach(t ${_targets})
