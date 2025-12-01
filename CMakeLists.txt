@@ -95,20 +95,6 @@ if(WIN32)
   target_compile_definitions(snfm_common PUBLIC NOMINMAX)
 endif()
 
-  # https://github.com/microsoft/vcpkg/issues/25300
-find_package(absl REQUIRED)
-foreach(t
-    absl::base
-    absl::spinlock_wait
-    absl::stacktrace
-    absl::symbolize
-    absl::failure_signal_handler
-)
-    if(TARGET ${t})
-        set_property(TARGET ${t} PROPERTY INTERFACE_LINK_OPTIONS "")
-    endif()
-endforeach()
-
 add_library(config "src/config.cpp")
 target_link_libraries(config PRIVATE yaml-cpp)
 if(WIN32)
@@ -152,3 +138,16 @@ COMMAND ${CMAKE_COMMAND} -E copy
         ${CMAKE_SOURCE_DIR}/snfm_user_manual.md
 
         ${CMAKE_CURRENT_BINARY_DIR}/snfm_user_manual.md)
+
+
+# https://github.com/microsoft/vcpkg/issues/25300
+# Remove -ignore:4221 from all INTERFACE_LINK_OPTIONS
+get_property(_targets GLOBAL PROPERTY TARGETS)
+
+foreach(t ${_targets})
+    get_target_property(_opts ${t} INTERFACE_LINK_OPTIONS)
+    if(_opts)
+        list(REMOVE_ITEM _opts "-ignore:4221")
+        set_property(TARGET ${t} PROPERTY INTERFACE_LINK_OPTIONS "${_opts}")
+    endif()
+endforeach()
