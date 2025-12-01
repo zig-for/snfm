@@ -142,7 +142,22 @@ COMMAND ${CMAKE_COMMAND} -E copy
 
 # https://github.com/microsoft/vcpkg/issues/25300
 # Remove -ignore:4221 from all INTERFACE_LINK_OPTIONS
-get_property(_targets GLOBAL PROPERTY TARGETS)
+macro(get_all_targets_recursive targets dir)
+    get_property(subdirectories DIRECTORY ${dir} PROPERTY SUBDIRECTORIES)
+    foreach(subdir ${subdirectories})
+        get_all_targets_recursive(${targets} ${subdir})
+    endforeach()
+
+    get_property(current_targets DIRECTORY ${dir} PROPERTY BUILDSYSTEM_TARGETS)
+    foreach(t ${current_targets})
+        # get_target_property(target_type ${t} TYPE)
+        # if (NOT ${target_type} STREQUAL "INTERFACE_LIBRARY" AND NOT ${target_type} STREQUAL "UTILITY")
+            list(APPEND ${targets} ${t})
+        # endif()
+    endforeach()
+endmacro()
+
+get_all_targets(all_targets)
 
 # foreach(t ${_targets})
 #     get_target_property(_opts ${t} INTERFACE_LINK_OPTIONS)
@@ -153,7 +168,7 @@ get_property(_targets GLOBAL PROPERTY TARGETS)
 # endforeach()
 
 
-foreach(t ${_targets})
+foreach(t ${all_targets})
     get_target_property(_type ${t} TYPE)
     if(NOT _type MATCHES "IMPORTED") 
         continue()
