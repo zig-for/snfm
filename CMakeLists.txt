@@ -142,51 +142,66 @@ COMMAND ${CMAKE_COMMAND} -E copy
 
 # https://github.com/microsoft/vcpkg/issues/25300
 # Remove -ignore:4221 from all INTERFACE_LINK_OPTIONS
-macro(get_all_targets_recursive targets dir)
-message("dir ${dir}")
-    get_property(subdirectories DIRECTORY ${dir} PROPERTY SUBDIRECTORIES)
-    foreach(subdir ${subdirectories})
-        get_all_targets_recursive(${targets} ${subdir})
-    endforeach()
-
-    get_property(current_targets DIRECTORY ${dir} PROPERTY BUILDSYSTEM_TARGETS)
-    foreach(t ${current_targets})
-        # get_target_property(target_type ${t} TYPE)
-        # if (NOT ${target_type} STREQUAL "INTERFACE_LIBRARY" AND NOT ${target_type} STREQUAL "UTILITY")
-            list(APPEND ${targets} ${t})
-            message("target ${t}")
-        # endif()
-    endforeach()
-endmacro()
-function(get_all_targets var)
-    set(targets)
-    get_all_targets_recursive(targets ${CMAKE_CURRENT_SOURCE_DIR})
-    set(${var} ${targets} PARENT_SCOPE)
-endfunction()
-message("omg")
-get_all_targets(all_targets)
-message("wtf")
-message(FATAL_ERROR "bbq")
-
-# foreach(t ${_targets})
-#     get_target_property(_opts ${t} INTERFACE_LINK_OPTIONS)
-#     if(_opts)
-#         list(REMOVE_ITEM _opts "-ignore:4221")
-#         set_property(TARGET ${t} PROPERTY INTERFACE_LINK_OPTIONS "${_opts}")
-#     endif()
-# endforeach()
-
-
-foreach(t ${all_targets})
-    get_target_property(_type ${t} TYPE)
-    if(NOT _type MATCHES "IMPORTED") 
-        continue()
+function(_dump_target_deps target out_deps)
+    # Avoid infinite recursion
+    get_property(_seen GLOBAL PROPERTY _DUMP_SEEN)
+    if(_seen)
+        list(FIND _seen "${target}" _idx)
+        if(NOT _idx EQUAL -1)
+            set(${out_deps} "" PARENT_SCOPE)
+            return()
+        endif()
     endif()
 
-    get_target_property(_lo  ${t} LINK_OPTIONS)
-    get_target_property(_ilo ${t} INTERFACE_LINK_OPTIONS)
+    list(APPEND _seen "${target}")
+    set_property(GLOBAL PROPERTY _DUMP_SEEN "${_seen}")
 
-    message(STATUS "=== Imported: ${t} ===")
-    message(STATUS "  LINK_OPTIONS:            ${_lo}")
-    message(STATUS "  INTERFACE_LINK_OPTIONS:  ${_ilo}")
-endforeach()
+    # Direct link deps of this target
+    get_target_property(_libs ${target} INTERFACE_LINK_LIBRARIES)
+    if(NOT _libs)
+        set(${out_deps} "" PARENT_SCOPE)
+        return()
+    endif()
+
+    set(_all "${_libs}")
+
+    # Recurse
+    foreach(lib IN LISTS _libs)
+        if(TARGET ${lib})
+            _dump_target_deps(${lib} _child)
+            list(APPEND _all ${_child})
+        endif()
+    endforeach()
+
+    list(REMOVE_DUPLICATES _all)
+    set(${out_deps} "${_all}" PARENT_SCOPE)
+endfunction()
+
+
+function(dump_target_link_options target)
+    message(STATUS "=== Dumping link options for: ${target} ===")
+
+    # 1. Dump this target's own options
+    get_target_property(_lo  ${target} LINK_OPTIONS)
+    get_target_property(_ilo ${target} INTERFACE_LINK_OPTIONS)
+    message(STATUS "  [SELF] LINK_OPTIONS:            ${_lo}")
+    message(STATUS "  [SELF] INTERFACE_LINK_OPTIONS:  ${_ilo}")
+
+    # 2. Walk dependency graph
+    _dump_target_deps(${target} _deps)
+
+    foreach(dep IN LISTS _deps)
+        if(NOT TARGET ${dep})
+            continue()
+        endif()
+
+        get_target_property(_dlo  ${dep} LINK_OPTIONS)
+        get_target_property(_dilo ${dep} INTERFACE_LINK_OPTIONS)
+
+        message(STATUS "  [DEP  ${dep}] LINK_OPTIONS:            ${_dlo}")
+        message(STATUS "  [DEP  ${dep}] INTERFACE_LINK_OPTIONS:  ${_dilo}")
+    endforeach()
+endfunction()
+dump_target_link_options(manage_files)
+
+dump_target_link_options(send_file)
