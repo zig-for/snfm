@@ -13,7 +13,6 @@
     },
     "grpc",
     "wxwidgets",
-    "libwebp",
     "yaml-cpp"
   ],
   "configuration": {
