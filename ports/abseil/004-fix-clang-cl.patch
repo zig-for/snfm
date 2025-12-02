@@ -1,0 +1,36 @@
+diff --git a/absl/copts/GENERATED_AbseilCopts.cmake b/absl/copts/GENERATED_AbseilCopts.cmake
+index b08c34c2..21ff453b 100644
+--- a/absl/copts/GENERATED_AbseilCopts.cmake
++++ b/absl/copts/GENERATED_AbseilCopts.cmake
+@@ -277,7 +277,6 @@ list(APPEND ABSL_MSVC_FLAGS
+ )
+ 
+ list(APPEND ABSL_MSVC_LINKOPTS
+-    "-ignore:4221"
+ )
+ 
+ list(APPEND ABSL_MSVC_TEST_FLAGS
+diff --git a/absl/copts/GENERATED_copts.bzl b/absl/copts/GENERATED_copts.bzl
+index 8c1d7a05..e1a6fc75 100644
+--- a/absl/copts/GENERATED_copts.bzl
++++ b/absl/copts/GENERATED_copts.bzl
+@@ -278,7 +278,6 @@ ABSL_MSVC_FLAGS = [
+ ]
+ 
+ ABSL_MSVC_LINKOPTS = [
+-    "-ignore:4221",
+ ]
+ 
+ ABSL_MSVC_TEST_FLAGS = [
+diff --git a/absl/copts/copts.py b/absl/copts/copts.py
+index c1d1f4a7..6488553e 100644
+--- a/absl/copts/copts.py
++++ b/absl/copts/copts.py
+@@ -199,7 +199,5 @@ COPT_VARS = {
+         ]
+     ),
+     "ABSL_MSVC_LINKOPTS": [
+-        # Object file doesn't export any previously undefined symbols
+-        "-ignore:4221",
+     ],
+ }

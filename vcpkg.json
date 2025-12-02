@@ -14,5 +14,10 @@
     "grpc",
     "wxwidgets",
     "yaml-cpp"
-  ]
+  ],
+  "configuration": {
+    "overlay-ports": [
+      "ports"
+    ]
+  }
 }

@@ -3,9 +3,6 @@ cmake_minimum_required(VERSION 3.22)
 
 cmake_policy(SET CMP0091 NEW)
 
-set_property(GLOBAL PROPERTY GLOBAL_DEPENDS_DEBUG_MODE 1)
-
-
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
 if(DEFINED VCPKG_HOST_TRIPLET AND NOT VCPKG_HOST_TRIPLET STREQUAL "")
   set(gRPC_BUILD_CODEGEN OFF)
@@ -139,72 +136,4 @@ add_custom_command(
 TARGET send_file POST_BUILD
 COMMAND ${CMAKE_COMMAND} -E copy
         ${CMAKE_SOURCE_DIR}/snfm_user_manual.md
-
         ${CMAKE_CURRENT_BINARY_DIR}/snfm_user_manual.md)
-
-
-# https://github.com/microsoft/vcpkg/issues/25300
-# Remove -ignore:4221 from all INTERFACE_LINK_OPTIONS
-function(_dump_target_deps target out_deps)
-    # Avoid infinite recursion
-    get_property(_seen GLOBAL PROPERTY _DUMP_SEEN)
-    if(_seen)
-        list(FIND _seen "${target}" _idx)
-        if(NOT _idx EQUAL -1)
-            set(${out_deps} "" PARENT_SCOPE)
-            return()
-        endif()
-    endif()
-
-    list(APPEND _seen "${target}")
-    set_property(GLOBAL PROPERTY _DUMP_SEEN "${_seen}")
-
-    # Direct link deps of this target
-    get_target_property(_libs ${target} INTERFACE_LINK_LIBRARIES)
-    if(NOT _libs)
-        set(${out_deps} "" PARENT_SCOPE)
-        return()
-    endif()
-
-    set(_all "${_libs}")
-
-    # Recurse
-    foreach(lib IN LISTS _libs)
-        if(TARGET ${lib})
-            _dump_target_deps(${lib} _child)
-            list(APPEND _all ${_child})
-        endif()
-    endforeach()
-
-    list(REMOVE_DUPLICATES _all)
-    set(${out_deps} "${_all}" PARENT_SCOPE)
-endfunction()
-
-
-function(dump_target_link_options target)
-    message(STATUS "=== Dumping link options for: ${target} ===")
-
-    # 1. Dump this target's own options
-    get_target_property(_lo  ${target} LINK_OPTIONS)
-    get_target_property(_ilo ${target} INTERFACE_LINK_OPTIONS)
-    message(STATUS "  [SELF] LINK_OPTIONS:            ${_lo}")
-    message(STATUS "  [SELF] INTERFACE_LINK_OPTIONS:  ${_ilo}")
-
-    # 2. Walk dependency graph
-    _dump_target_deps(${target} _deps)
-
-    foreach(dep IN LISTS _deps)
-        if(NOT TARGET ${dep})
-            continue()
-        endif()
-
-        get_target_property(_dlo  ${dep} LINK_OPTIONS)
-        get_target_property(_dilo ${dep} INTERFACE_LINK_OPTIONS)
-
-        message(STATUS "  [DEP  ${dep}] LINK_OPTIONS:            ${_dlo}")
-        message(STATUS "  [DEP  ${dep}] INTERFACE_LINK_OPTIONS:  ${_dilo}")
-    endforeach()
-endfunction()
-dump_target_link_options(manage_files)
-
-dump_target_link_options(send_file)
