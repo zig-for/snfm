@@ -1,5 +1,5 @@
 ﻿#pragma once
-#ifdef WIN32
+#ifdef _WIN32
 #define WIN_DROP_SOURCE
 #endif
 #ifdef WIN_DROP_SOURCE
@@ -90,7 +90,7 @@ public:
         
         wxIcon exportIcon = GetSystemIcon(SystemIcon::EXPORT);
         wxImage importIcon;
-#if WIN32
+#if _WIN32
         importIcon = wxBitmap(exportIcon).ConvertToImage();
         importIcon = importIcon.Mirror(false);
         importIcon.RotateHue(0.66);
@@ -168,7 +168,7 @@ private:
             return 1;
         }
         int c =
-#ifdef WIN32
+#ifdef _WIN32
             strcmpi
 #else
             strcasecmp

@@ -7,18 +7,28 @@ on:
     branches: [ "main" ]
   release:
     types: [ published ]
-
+permissions:
+  packages: write
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
+  USERNAME: ${{ github.repository_owner }}
   BUILD_TYPE: Release
+  FEED_URL: https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
+  VCPKG_BINARY_SOURCES: "clear;nuget,GitHubPackages,readwrite;nugettimeout,3600"
+  VCPKG_USE_NUGET_CACHE: true
+  VCPKG_EXE: vcpkg/vcpkg
+  VCPKG_ROOT: vcpkg
+
 jobs:
   build:
     strategy:
       matrix:
         config:
-          - { os: windows-latest, preset: windows-x64-release, vcpkg-dir: 'C:/lukka-vcpkg' }
-          - { os: ubuntu-20.04, preset: linux-x64-release, vcpkg-dir: '/tmp/lukka-vcpkg' }
-          - { os: macos-latest, preset: macos-x64-release, vcpkg-dir: '/tmp/lukka-vcpkg' }
+          - { os: windows-latest, preset: windows-x64-release }
+          - { os: ubuntu-24.04, preset: linux-x64-release }
+          - { os: macos-15-intel, preset: macos-x64-release }
+          - { os: macos-latest, preset: macos-arm64-release }
+  
     runs-on: ${{ matrix.config.os }}
     continue-on-error: true
     steps:
@@ -26,61 +36,64 @@ jobs:
         with:
           submodules: true
       # TODO: figure out how to disable wxGL so we can get rid of freeglut
-      - run: sudo apt-get update && sudo apt-get install pkg-config libgtk-3-dev libsecret-1-dev libgcrypt20-dev libsystemd-dev freeglut3-dev
-        if: ${{ contains(matrix.config.os, 'ubuntu') }}
-      - run: brew install pkg-config
-        if: ${{ contains(matrix.config.os, 'macos') }}
+      - run: sudo apt-get update && sudo apt-get install libltdl-dev autoconf autoconf-archive automake libtool pkg-config libgtk-3-dev libsecret-1-dev libgcrypt20-dev libsystemd-dev freeglut3-dev mono-complete
+        if: runner.os == 'Linux'
+      - run: brew install pkg-config mono # protobuf grpc 
+        if: runner.os == 'macOS'
+      - name: Install Mono
+        shell: pwsh
+        run: winget install -e --id Mono.Mono --silent --accept-source-agreements
+        if: runner.os == 'Windows'
+      # - uses: ilammy/msvc-dev-cmd@v1
+      #   if: runner.os == 'Windows'
 
-
-      - run: mkdir ${{ matrix.config.vcpkg-dir }}
-      # Install latest CMake.
-      - uses: lukka/get-cmake@latest
-      - name: Restore artifacts, or setup vcpkg (do not install any package)
-        uses: lukka/run-vcpkg@v10
+      - name: Download vcpkg
+        uses: actions/checkout@v6
         with:
-          vcpkgDirectory: ${{ matrix.config.vcpkg-dir }}
-          # If not using a submodule for vcpkg sources, this specifies which commit
-          # id must be checkout from a Git repo. It must not set if using a submodule
-          # for vcpkg.
-          vcpkgGitCommitId: 'c168ce4e765409509c9c482faa0468c4e1ab386b'
+          repository: 'microsoft/vcpkg'
+          ref: '5bf0c55239da398b8c6f450818c9e28d36bf9966'
+          path: vcpkg
+      - name: Bootstrap vcpkg
+        if: runner.os != 'Windows'
+        shell: bash
+        run: ${{ github.workspace }}/vcpkg/bootstrap-vcpkg.sh
+      - name: Bootstrap vcpkg
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ${{ github.workspace }}/vcpkg/bootstrap-vcpkg.bat
+      - name: Add NuGet sources
+        if: ${{ ! contains(matrix.config.os, 'windows') }}
+        run: |
+          mono `${{ env.VCPKG_EXE }} fetch nuget | tail -n 1` \
+            sources add \
+            -Source "${{ env.FEED_URL }}" \
+            -StorePasswordInClearText \
+            -Name GitHubPackages \
+            -UserName "${{ env.USERNAME }}" \
+            -Password "${{ secrets.GITHUB_TOKEN }}"
+          mono `${{ env.VCPKG_EXE }} fetch nuget | tail -n 1` \
+            setapikey "${{ secrets.VCPKG_PAT_TOKEN }}" \
+            -Source "${{ env.FEED_URL }}"
+      - name: Add NuGet sources
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          .$(${{ env.VCPKG_EXE }} fetch nuget) `
+            sources add `
+            -Source "${{ env.FEED_URL }}" `
+            -StorePasswordInClearText `
+            -Name GitHubPackages `
+            -UserName "${{ env.USERNAME }}" `
+            -Password "${{ secrets.GITHUB_TOKEN }}"
+          .$(${{ env.VCPKG_EXE }} fetch nuget) `
+            setapikey "${{ secrets.VCPKG_PAT_TOKEN }}" `
+            -Source "${{ env.FEED_URL }}"
 
-          # This is the glob expression used to locate the vcpkg.json and add its
-          # hash to the cache key. Change it to match a single manifest file you want
-          # to use.
-          # vcpkgJsonGlob: '**/vcpkg.json'
-
-          # This is needed to run `vcpkg install` command (after vcpkg is built) in
-          # the directory where vcpkg.json has been located. Default is false,
-          # It is highly suggested to let `run-cmake` to run vcpkg (i.e. `false`)
-          # (i.e. let CMake run `vcpkg install`) using the vcpkg.cmake toolchain.
-          # runVcpkgInstall: true
-
-      - name: Run CMake consuming CMakePreset.json and vcpkg.json by mean of vcpkg.
-        uses: lukka/run-cmake@v10
-        with:
-          # This is the default path to the CMakeLists.txt along side the
-          # CMakePresets.json. Change if you need have CMakeLists.txt and CMakePresets.json
-          # located elsewhere.
-          # cmakeListsTxtPath: 'C:/snfm/CMakeLists.txt'
-
-          # This is the name of the CMakePresets.json's configuration to use to generate
-          # the project files. This configuration leverages the vcpkg.cmake toolchain file to
-          # run vcpkg and install all dependencies specified in vcpkg.json.
-                    
-          configurePreset: '${{ matrix.config.preset }}'
-
-          # This is the name of the CMakePresets.json's configuration to build the project.
-          buildPreset: '${{ matrix.config.preset }}'
-      - name: Remove buildtrees from cache
-        uses: JesseTG/rm@v1.0.3
-        with:
-          path: ${{ matrix.config.vcpkg-dir }}/buildtrees
-      - name: Remove downloads from cache
-        uses: JesseTG/rm@v1.0.3
-        with:
-          path: ${{ matrix.config.vcpkg-dir }}/downloads
+      - run: vcpkg/vcpkg fetch ninja
+      - run: cmake --preset '${{ matrix.config.preset }}' -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_LINKER=lld
+      - run: cmake --build out/build/${{ matrix.config.preset }}
       - name: Archive build
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v5
         with:
           name: snfm-${{ matrix.config.preset }}
           path: |
@@ -90,10 +103,7 @@ jobs:
             out/build/${{ matrix.config.preset }}/send_file
             out/build/${{ matrix.config.preset }}/snfm_user_manual.md
             out/build/${{ matrix.config.preset }}/snfm_config_example.yaml
-      - run: |
-          echo "RUNVCPKG_NO_CACHE=1" >> $GITHUB_ENV
-        if: ${{ failure() || cancelled() }}
-        shell: bash
+
   release:
     if: github.event_name == 'release'
     runs-on: ubuntu-latest
@@ -102,26 +112,29 @@ jobs:
       - name: Inject slug/short variables
         uses: rlespinasse/github-slug-action@v3.x
       - name: Get artifact
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v6
         with:
           name: snfm-windows-x64-release
           path: windows
       - name: Get artifact
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v6
         with:
           name: snfm-linux-x64-release
           path: linux
       - name: Get artifact
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v6
+        with:
+          name: snfm-macos-arm64-release
+          path: macos-arm64
+      - name: Get artifact
+        uses: actions/download-artifact@v6
         with:
           name: snfm-macos-x64-release
-          path: macos
+          path: macos-x64
       - name: Fix +x
         run: |
-          chmod +x linux/send_file
-          chmod +x linux/manage_files
-          chmod +x macos/send_file
-          chmod +x macos/manage_files
+          chmod +x */send_file
+          chmod +x */manage_files
 
       - name: Archive Release
         uses: thedoctor0/zip-release@main
@@ -162,3 +175,10 @@ jobs:
           overwrite: true
           asset_name: snfm-$tag-macos-x64.zip
           file: snfm-macos-x64-release.zip
+      - name: Upload binaries to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          tag: ${{ env.GITHUB_REF_SLUG }}
+          overwrite: true
+          asset_name: snfm-$tag-macos-arm64.zip
+          file: snfm-macos-arm64-release.zip

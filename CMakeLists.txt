@@ -1,6 +1,13 @@
+
 cmake_minimum_required(VERSION 3.22)
+
 cmake_policy(SET CMP0091 NEW)
+
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
+if(DEFINED VCPKG_HOST_TRIPLET AND NOT VCPKG_HOST_TRIPLET STREQUAL "")
+  set(gRPC_BUILD_CODEGEN OFF)
+endif()
+
 project(snfm)
 
 set ( Protobuf_USE_STATIC_LIBS ON )
@@ -11,14 +18,14 @@ find_package(yaml-cpp REQUIRED)
 set(wxWidgets_USE_DEBUG OFF)
 # Workaround issue where wxwidgets can't find a release only build with the above flag
 message(STATUS "WXWIDGETS DIR " ${wxWidgets_LIB_DIR})
-IF(CMAKE_BUILD_TYPE MATCHES "Release")
+if(CMAKE_BUILD_TYPE MATCHES "Release")
   set(wxWidgets_LIB_DIR ${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib)
 endif()
 message(STATUS "new WXWIDGETS DIR " ${wxWidgets_LIB_DIR})
-find_package(wxWidgets REQUIRED COMPONENTS core base)
+find_package(wxWidgets REQUIRED CONFIG COMPONENTS core base)
 
 set(CMAKE_CXX_STANDARD 20)
-find_program(GRPC_CPP_PLUGIN grpc_cpp_plugin) # Get full path to plugin
+get_property(GRPC_CPP_PLUGIN TARGET gRPC::grpc_cpp_plugin PROPERTY IMPORTED_LOCATION_RELEASE )
 
 function(PROTOBUF_GENERATE_GRPC_CPP SRCS HDRS)
   if(NOT ARGN)
@@ -84,6 +91,9 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR} include icons %)
 
 add_library(snfm_common ${PROTO_SRCS} ${PROTO_HDRS} ${PROTO_GRPC_SRCS} ${PROTO_GRPC_HDRS})
 target_link_libraries(snfm_common protobuf::libprotoc protobuf::libprotobuf gRPC::grpc++_unsecure)
+if(WIN32)
+  target_compile_definitions(snfm_common PUBLIC NOMINMAX)
+endif()
 
 add_library(config "src/config.cpp")
 target_link_libraries(config PRIVATE yaml-cpp)
@@ -96,8 +106,8 @@ add_executable(send_file
     "src/config.cpp")
 target_link_libraries(send_file PRIVATE snfm_common config)
 if(WIN32)
-    target_sources(send_file PRIVATE "windows/send_file.rc")
-endif(WIN32)
+  target_sources(send_file PRIVATE "windows/send_file.rc")  
+endif()
 
 add_executable(manage_files WIN32 "src/sn_file_tree.cpp" "src/sn_file_tree_ui_events.cpp" "src/manage_files.cpp" "src/snfm.cpp")
 if(WIN32)

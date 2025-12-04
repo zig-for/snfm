@@ -1,4 +1,3 @@
-.vscode
-.vs
-build*/
-out/
+vcpkg_installed
+.DS_Store
+out
