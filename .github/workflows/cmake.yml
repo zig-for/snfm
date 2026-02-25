@@ -44,9 +44,19 @@ jobs:
         shell: pwsh
         run: winget install -e --id Mono.Mono --silent --accept-source-agreements
         if: runner.os == 'Windows'
-      # - uses: ilammy/msvc-dev-cmd@v1
-      #   if: runner.os == 'Windows'
 
+      - name: sign macOS build
+        if: runner.os == 'macOS'
+        env:
+          TEMP_PASSWORD: build.keychain
+        run: |
+          echo $MACOS_CERTIFICATE | base64 —decode > certificate.p12
+          security create-keychain -p $TEMP_PASSWORD build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p $TEMP_PASSWORD build.keychain
+          security import certificate.p12 -k build.keychain -P $MACOS_CERTIFICATE_PWD -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k $TEMP_PASSWORD build.keychain
+      
       - name: Download vcpkg
         uses: actions/checkout@v6
         with:
@@ -62,7 +72,7 @@ jobs:
         shell: pwsh
         run: ${{ github.workspace }}/vcpkg/bootstrap-vcpkg.bat
       - name: Add NuGet sources
-        if: ${{ ! contains(matrix.config.os, 'windows') }}
+        if: runner.os != 'Windows'
         run: |
           mono `${{ env.VCPKG_EXE }} fetch nuget | tail -n 1` \
             sources add \
@@ -92,6 +102,12 @@ jobs:
       - run: vcpkg/vcpkg fetch ninja
       - run: cmake --preset '${{ matrix.config.preset }}' -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_LINKER=lld
       - run: cmake --build out/build/${{ matrix.config.preset }}
+      - name: sign macOS build
+        if: runner.os == 'macOS'
+        run: |
+          /usr/bin/codesign --force -s $MACOS_IDENTITY_ID out/build/${{ matrix.config.preset }}/manage_files -v
+          /usr/bin/codesign --force -s $MACOS_IDENTITY_ID out/build/${{ matrix.config.preset }}/send_file -v
+
       - name: Archive build
         uses: actions/upload-artifact@v5
         with:
