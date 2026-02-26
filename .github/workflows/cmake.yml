@@ -62,7 +62,7 @@ jobs:
         if: runner.os == 'macOS'
         run: xcrun notarytool history
                --apple-id ${{ secrets.APPLE_ID }}
-               --team-id ${{ secrets.MACOS_IDENTITY_ID }}
+               --team-id ${{ secrets.APPLE_DEVELOPER_TEAM_ID }}
                --password ${{ secrets.APP_SPECIFIC_PASS }}
       - name: Download vcpkg
         uses: actions/checkout@v6
@@ -144,7 +144,7 @@ jobs:
         if: runner.os == 'macOS'
         run: xcrun notarytool submit --wait
                --apple-id ${{ secrets.APPLE_ID }}
-               --team-id ${{ secrets.MACOS_IDENTITY_ID }}
+               --team-id ${{ secrets.APPLE_DEVELOPER_TEAM_ID }}
                --password ${{ secrets.APP_SPECIFIC_PASS }}
                snfm.zip
 
