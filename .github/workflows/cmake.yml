@@ -122,7 +122,7 @@ jobs:
 
       - name: zip for upload to Apple
         if: runner.os == 'macOS'
-        run: zip
+        run: zip -j
               snfm.zip
               out/build/${{ matrix.config.preset }}/manage_files
               out/build/${{ matrix.config.preset }}/send_file
