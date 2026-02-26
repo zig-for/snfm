@@ -109,10 +109,10 @@ jobs:
           /usr/bin/codesign --force -s ${{ secrets.MACOS_IDENTITY_ID }} out/build/${{ matrix.config.preset }}/send_file -v
 
       - name: notarize macOS build
-        run: xcrun notarytool submit --wait \
-               --apple-id ${{ secrets.APPLE_ID }} \
-               --team-id ${{ secrets.MACOS_IDENTITY_ID }} \
-               --password ${{ secrets.APP_SPECIFIC_PASSWORD }} \
+        run: xcrun notarytool submit --wait
+               --apple-id ${{ secrets.APPLE_ID }}
+               --team-id ${{ secrets.MACOS_IDENTITY_ID }}
+               --password ${{ secrets.APP_SPECIFIC_PASSWORD }}
                out/build/${{ matrix.config.preset }}/manage_files
 
       # - name: Install App Store Connect API Key
