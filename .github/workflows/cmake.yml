@@ -121,7 +121,7 @@ jobs:
           input_path: out/build/${{ matrix.config.preset }}/manage_files
           notarize: true
           staple: true
-          p12_file: certificate.p12
+          p12_file: private_keys/certificate.p12
           p12_password: ${{ secrets.MACOS_CERTIFICATE_PWD }}
           # Find the issuer and key ID at https://appstoreconnect.apple.com/access/api.
           # The `AuthKey_XXXXXX.12` file created above must have the same `api_key` value listed here.
