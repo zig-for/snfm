@@ -45,12 +45,12 @@ jobs:
         run: winget install -e --id Mono.Mono --silent --accept-source-agreements
         if: runner.os == 'Windows'
 
-      - name: sign macOS build
+      - name: unpack Apple signing credentials
         if: runner.os == 'macOS'
         env:
           TEMP_PASSWORD: build.keychain
         run: |
-          echo "${{secrets.MACOS_CERTIFICATE}}" | base64 -D > certificate.p12
+          echo "${{secrets.MACOS_CERTIFICATE}}" | base64 -D > certificate.p12 
           security create-keychain -p $TEMP_PASSWORD build.keychain
           security default-keychain -s build.keychain
           security unlock-keychain -p $TEMP_PASSWORD build.keychain
@@ -105,8 +105,8 @@ jobs:
       - name: sign macOS build
         if: runner.os == 'macOS'
         run: |
-          /usr/bin/codesign --force -s $MACOS_IDENTITY_ID out/build/${{ matrix.config.preset }}/manage_files -v
-          /usr/bin/codesign --force -s $MACOS_IDENTITY_ID out/build/${{ matrix.config.preset }}/send_file -v
+          /usr/bin/codesign --force -s ${{ secrets.MACOS_IDENTITY_ID }} out/build/${{ matrix.config.preset }}/manage_files -v
+          /usr/bin/codesign --force -s ${{ secrets.MACOS_IDENTITY_ID }} out/build/${{ matrix.config.preset }}/send_file -v
 
       - name: Archive build
         uses: actions/upload-artifact@v5
