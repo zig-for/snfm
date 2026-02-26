@@ -57,6 +57,13 @@ jobs:
           security import certificate.p12 -k build.keychain -P "${{secrets.MACOS_CERTIFICATE_PWD}}" -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k $TEMP_PASSWORD build.keychain
       
+
+      - name: test
+        if: runner.os == 'macOS'
+        run: xcrun notarytool history
+               --apple-id ${{ secrets.APPLE_ID }}
+               --team-id ${{ secrets.MACOS_IDENTITY_ID }}
+               --password ${{ secrets.APP_SPECIFIC_PASS }}
       - name: Download vcpkg
         uses: actions/checkout@v6
         with:
@@ -133,7 +140,6 @@ jobs:
         with:
           name: snfm.zip
           path: snfm.zip
-
       - name: notarize macOS build
         if: runner.os == 'macOS'
         run: xcrun notarytool submit --wait
