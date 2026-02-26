@@ -108,6 +108,12 @@ jobs:
           /usr/bin/codesign --force -s ${{ secrets.MACOS_IDENTITY_ID }} out/build/${{ matrix.config.preset }}/manage_files -v
           /usr/bin/codesign --force -s ${{ secrets.MACOS_IDENTITY_ID }} out/build/${{ matrix.config.preset }}/send_file -v
 
+      - name: zip for upload to Apple
+        run: zip 
+              snfm.zip
+              out/build/${{ matrix.config.preset }}/manage_files
+              out/build/${{ matrix.config.preset }}/send_file
+
       - name: notarize macOS build
         run: xcrun notarytool submit --wait
                --apple-id ${{ secrets.APPLE_ID }}
