@@ -116,7 +116,7 @@ jobs:
 
       - name: Sign and Notarize
         if: runner.os == 'macOS'
-        uses: indygreg/apple-code-sign-action@v1
+        uses: zig-for/apple-code-sign-action@v1
         with:
           input_path: out/build/${{ matrix.config.preset }}/manage_files
           notarize: true
