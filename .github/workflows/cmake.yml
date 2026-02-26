@@ -133,7 +133,7 @@ jobs:
       #     # The `AuthKey_XXXXXX.12` file created above must have the same `api_key` value listed here.
       #     app_store_connect_api_issuer: ${{ secrets.APP_STORE_CONNECT_API_ISSUER }}
       #     app_store_connect_api_key: 7574JQYYVK
-      # - name: Archive build
+      - name: Archive build
         uses: actions/upload-artifact@v5
         with:
           name: snfm-${{ matrix.config.preset }}
