@@ -121,12 +121,14 @@ jobs:
             out/build/${{ matrix.config.preset }}/snfm_config_example.yaml
 
       - name: zip for upload to Apple
-        run: zip 
+        if: runner.os == 'macOS'
+        run: zip
               snfm.zip
               out/build/${{ matrix.config.preset }}/manage_files
               out/build/${{ matrix.config.preset }}/send_file
 
       - name: notarize macOS build
+        if: runner.os == 'macOS'
         run: xcrun notarytool submit --wait
                --apple-id ${{ secrets.APPLE_ID }}
                --team-id ${{ secrets.MACOS_IDENTITY_ID }}
