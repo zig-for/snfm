@@ -50,7 +50,7 @@ jobs:
         env:
           TEMP_PASSWORD: build.keychain
         run: |
-          echo "${{secrets.MACOS_CERTIFICATE}}" | base64 —-decode > certificate.p12
+          echo "${{secrets.MACOS_CERTIFICATE}}" | base64 -D > certificate.p12
           security create-keychain -p $TEMP_PASSWORD build.keychain
           security default-keychain -s build.keychain
           security unlock-keychain -p $TEMP_PASSWORD build.keychain
