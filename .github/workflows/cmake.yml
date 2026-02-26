@@ -108,6 +108,18 @@ jobs:
           /usr/bin/codesign --options runtime --force -s ${{ secrets.MACOS_IDENTITY_ID }} out/build/${{ matrix.config.preset }}/manage_files -v
           /usr/bin/codesign --options runtime --force -s ${{ secrets.MACOS_IDENTITY_ID }} out/build/${{ matrix.config.preset }}/send_file -v
 
+      - name: Archive build
+        uses: actions/upload-artifact@v5
+        with:
+          name: snfm-${{ matrix.config.preset }}
+          path: |
+            out/build/${{ matrix.config.preset }}/manage_files.exe
+            out/build/${{ matrix.config.preset }}/send_file.exe
+            out/build/${{ matrix.config.preset }}/manage_files
+            out/build/${{ matrix.config.preset }}/send_file
+            out/build/${{ matrix.config.preset }}/snfm_user_manual.md
+            out/build/${{ matrix.config.preset }}/snfm_config_example.yaml
+
       - name: zip for upload to Apple
         run: zip 
               snfm.zip
@@ -120,36 +132,6 @@ jobs:
                --team-id ${{ secrets.MACOS_IDENTITY_ID }}
                --password ${{ secrets.APP_SPECIFIC_PASS }}
                snfm.zip
-
-      # - name: Install App Store Connect API Key
-      #   run: |
-      #     mkdir -p private_keys/
-      #     echo '${{ secrets.app_store_connect_key }}' > private_keys/AuthKey_7574JQYYVK.p12
-
-      # - name: Sign and Notarize
-      #   if: runner.os == 'macOS'
-      #   uses: zig-for/apple-code-sign-action@v1.2
-      #   with:
-      #     input_path: out/build/${{ matrix.config.preset }}/manage_files
-      #     notarize: true
-      #     staple: true
-      #     p12_file: private_keys/certificate.p12
-      #     p12_password: ${{ secrets.MACOS_CERTIFICATE_PWD }}
-      #     # Find the issuer and key ID at https://appstoreconnect.apple.com/access/api.
-      #     # The `AuthKey_XXXXXX.12` file created above must have the same `api_key` value listed here.
-      #     app_store_connect_api_issuer: ${{ secrets.APP_STORE_CONNECT_API_ISSUER }}
-      #     app_store_connect_api_key: 7574JQYYVK
-      - name: Archive build
-        uses: actions/upload-artifact@v5
-        with:
-          name: snfm-${{ matrix.config.preset }}
-          path: |
-            out/build/${{ matrix.config.preset }}/manage_files.exe
-            out/build/${{ matrix.config.preset }}/send_file.exe
-            out/build/${{ matrix.config.preset }}/manage_files
-            out/build/${{ matrix.config.preset }}/send_file
-            out/build/${{ matrix.config.preset }}/snfm_user_manual.md
-            out/build/${{ matrix.config.preset }}/snfm_config_example.yaml
 
   release:
     if: github.event_name == 'release'
