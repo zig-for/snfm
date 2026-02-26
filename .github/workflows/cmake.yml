@@ -127,6 +127,13 @@ jobs:
               out/build/${{ matrix.config.preset }}/manage_files
               out/build/${{ matrix.config.preset }}/send_file
 
+      - name: Archive the thing we upload to apple
+        uses: actions/upload-artifact@v5
+        if: runner.os == 'macOS'
+        with:
+          name: snfm.zip
+          path: snfm.zip
+
       - name: notarize macOS build
         if: runner.os == 'macOS'
         run: xcrun notarytool submit --wait
