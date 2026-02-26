@@ -45,25 +45,6 @@ jobs:
         run: winget install -e --id Mono.Mono --silent --accept-source-agreements
         if: runner.os == 'Windows'
 
-      - name: unpack Apple signing credentials
-        if: runner.os == 'macOS'
-        env:
-          TEMP_PASSWORD: build.keychain
-        run: |
-          echo "${{secrets.MACOS_CERTIFICATE}}" | base64 -D > certificate.p12 
-          security create-keychain -p $TEMP_PASSWORD build.keychain
-          security default-keychain -s build.keychain
-          security unlock-keychain -p $TEMP_PASSWORD build.keychain
-          security import certificate.p12 -k build.keychain -P "${{secrets.MACOS_CERTIFICATE_PWD}}" -T /usr/bin/codesign
-          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k $TEMP_PASSWORD build.keychain
-      
-
-      - name: test
-        if: runner.os == 'macOS'
-        run: xcrun notarytool history
-               --apple-id ${{ secrets.APPLE_ID }}
-               --team-id ${{ secrets.APPLE_DEVELOPER_TEAM_ID }}
-               --password ${{ secrets.APP_SPECIFIC_PASS }}
       - name: Download vcpkg
         uses: actions/checkout@v6
         with:
@@ -109,12 +90,6 @@ jobs:
       - run: vcpkg/vcpkg fetch ninja
       - run: cmake --preset '${{ matrix.config.preset }}' -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_LINKER=lld
       - run: cmake --build out/build/${{ matrix.config.preset }}
-      - name: sign macOS build
-        if: runner.os == 'macOS'
-        run: |
-          /usr/bin/codesign --options runtime --force -s ${{ secrets.MACOS_IDENTITY_ID }} out/build/${{ matrix.config.preset }}/manage_files -v
-          /usr/bin/codesign --options runtime --force -s ${{ secrets.MACOS_IDENTITY_ID }} out/build/${{ matrix.config.preset }}/send_file -v
-
       - name: Archive build
         uses: actions/upload-artifact@v5
         with:
@@ -127,26 +102,65 @@ jobs:
             out/build/${{ matrix.config.preset }}/snfm_user_manual.md
             out/build/${{ matrix.config.preset }}/snfm_config_example.yaml
 
-      - name: zip for upload to Apple
-        if: runner.os == 'macOS'
-        run: zip -j
-              snfm.zip
-              out/build/${{ matrix.config.preset }}/manage_files
-              out/build/${{ matrix.config.preset }}/send_file
-
-      - name: Archive the thing we upload to apple
-        uses: actions/upload-artifact@v5
-        if: runner.os == 'macOS'
+  sign:
+    runs-on: macos-latest
+    needs: build
+    steps:
+      - name: unpack Apple signing credentials
+        env:
+          TEMP_PASSWORD: build.keychain
+        run: |
+          echo "${{secrets.MACOS_CERTIFICATE}}" | base64 -D > certificate.p12 
+          security create-keychain -p $TEMP_PASSWORD build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p $TEMP_PASSWORD build.keychain
+          security import certificate.p12 -k build.keychain -P "${{secrets.MACOS_CERTIFICATE_PWD}}" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k $TEMP_PASSWORD build.keychain
+      - name: Get artifact
+        uses: actions/download-artifact@v6
         with:
-          name: snfm.zip
-          path: snfm.zip
+          name: snfm-macos-arm64-release
+          path: macos-arm64
+      - name: Get artifact
+        uses: actions/download-artifact@v6
+        with:
+          name: snfm-macos-x64-release
+          path: macos-x64
+      - name: Create universal binaries
+        run: |
+          mkdir -p out
+          run ls -al
+          lipo -create -output out/send_file macos-arm64/manage_files macos-x64/manage_files
+          lipo -create -output out/send_file macos-arm64/send_file macos-x64/send_file
+        
+      - name: Sign macOS binaries
+        run: |
+          /usr/bin/codesign --options runtime --force -s ${{ secrets.MACOS_IDENTITY_ID }} out/manage_files
+          /usr/bin/codesign --options runtime --force -s ${{ secrets.MACOS_IDENTITY_ID }} out/send_file
+
+      - name: Zip for upload to Apple
+        run: zip -j
+              snfm-apple.zip
+              out/manage_files
+              out/send_file
+
+      - name: Add additional files
+        run: |
+          cp macos-arm64/snfm_user_manual.md out
+          cp macos-arm64/snfm_config_example.yaml out
+
+      - name: Archive build
+        uses: actions/upload-artifact@v5
+        with:
+          name: snfm-apple-universal
+          path: out/
+
       - name: notarize macOS build
-        if: runner.os == 'macOS'
         run: xcrun notarytool submit --wait
-               --apple-id ${{ secrets.APPLE_ID }}
-               --team-id ${{ secrets.APPLE_DEVELOPER_TEAM_ID }}
-               --password ${{ secrets.APP_SPECIFIC_PASS }}
-               snfm.zip
+              --apple-id ${{ secrets.APPLE_ID }}
+              --team-id ${{ secrets.APPLE_DEVELOPER_TEAM_ID }}
+              --password ${{ secrets.APP_SPECIFIC_PASS }}
+              snfm-apple.zip
 
   release:
     if: github.event_name == 'release'
