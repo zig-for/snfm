@@ -131,7 +131,7 @@ jobs:
       - name: Create universal binaries
         run: |
           mkdir -p out
-          run ls -al
+          ls -al
           lipo -create -output out/send_file macos-arm64/manage_files macos-x64/manage_files
           lipo -create -output out/send_file macos-arm64/send_file macos-x64/send_file
         
