@@ -118,7 +118,7 @@ jobs:
         run: xcrun notarytool submit --wait
                --apple-id ${{ secrets.APPLE_ID }}
                --team-id ${{ secrets.MACOS_IDENTITY_ID }}
-               --password ${{ secrets.APP_SPECIFIC_PASSWORD }}
+               --password ${{ secrets.APP_SPECIFIC_PASS }}
                out/build/${{ matrix.config.preset }}/manage_files
 
       # - name: Install App Store Connect API Key
