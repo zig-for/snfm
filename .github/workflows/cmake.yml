@@ -24,9 +24,8 @@ jobs:
     strategy:
       matrix:
         config:
-          # TEMP
-          # - { os: windows-latest, preset: windows-x64-release }
-          # - { os: ubuntu-24.04, preset: linux-x64-release }
+          - { os: windows-latest, preset: windows-x64-release }
+          - { os: ubuntu-24.04, preset: linux-x64-release }
           - { os: macos-15-intel, preset: macos-x64-release }
           - { os: macos-latest, preset: macos-arm64-release }
   
@@ -117,12 +116,12 @@ jobs:
           security unlock-keychain -p $TEMP_PASSWORD build.keychain
           security import certificate.p12 -k build.keychain -P "${{secrets.MACOS_CERTIFICATE_PWD}}" -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k $TEMP_PASSWORD build.keychain
-      - name: Get artifact
+      - name: Get artifact (arm)
         uses: actions/download-artifact@v6
         with:
           name: snfm-macos-arm64-release
           path: macos-arm64
-      - name: Get artifact
+      - name: Get artifact (x64)
         uses: actions/download-artifact@v6
         with:
           name: snfm-macos-x64-release
@@ -134,29 +133,24 @@ jobs:
           lipo -create -output out/manage_files macos-arm64/manage_files macos-x64/manage_files
           lipo -create -output out/send_file macos-arm64/send_file macos-x64/send_file
           ls -al out
-        
       - name: Sign macOS binaries
         run: |
           /usr/bin/codesign --options runtime --force -s ${{ secrets.MACOS_IDENTITY_ID }} out/manage_files
           /usr/bin/codesign --options runtime --force -s ${{ secrets.MACOS_IDENTITY_ID }} out/send_file
-
       - name: Zip for upload to Apple
         run: zip -j
               snfm-apple.zip
               out/manage_files
               out/send_file
-
       - name: Add additional files
         run: |
           cp macos-arm64/snfm_user_manual.md out
           cp macos-arm64/snfm_config_example.yaml out
-
       - name: Archive build
         uses: actions/upload-artifact@v5
         with:
-          name: snfm-apple-universal
+          name: snfm-macos-universal-release
           path: out/
-
       - name: notarize macOS build
         run: xcrun notarytool submit --wait
               --apple-id ${{ secrets.APPLE_ID }}
@@ -171,31 +165,25 @@ jobs:
     steps:
       - name: Inject slug/short variables
         uses: rlespinasse/github-slug-action@v3.x
-      - name: Get artifact
+      - name: Get artifact (windows)
         uses: actions/download-artifact@v6
         with:
           name: snfm-windows-x64-release
           path: windows
-      - name: Get artifact
+      - name: Get artifact (linux)
         uses: actions/download-artifact@v6
         with:
           name: snfm-linux-x64-release
           path: linux
-      - name: Get artifact
+      - name: Get artifact (mac)
         uses: actions/download-artifact@v6
         with:
-          name: snfm-macos-arm64-release
-          path: macos-arm64
-      - name: Get artifact
-        uses: actions/download-artifact@v6
-        with:
-          name: snfm-macos-x64-release
-          path: macos-x64
+          name: snfm-macos-universal-release
+          path: macos
       - name: Fix +x
         run: |
           chmod +x */send_file
           chmod +x */manage_files
-
       - name: Archive Release
         uses: thedoctor0/zip-release@main
         with:
@@ -212,7 +200,7 @@ jobs:
         uses: thedoctor0/zip-release@main
         with:
           type: zip
-          filename: ../snfm-macos-x64-release.zip
+          filename: ../snfm-macos-universal-release.zip
           directory: macos
       - name: Upload binaries to release
         uses: svenstaro/upload-release-action@v2
@@ -233,12 +221,5 @@ jobs:
         with:
           tag: ${{ env.GITHUB_REF_SLUG }}
           overwrite: true
-          asset_name: snfm-$tag-macos-x64.zip
-          file: snfm-macos-x64-release.zip
-      - name: Upload binaries to release
-        uses: svenstaro/upload-release-action@v2
-        with:
-          tag: ${{ env.GITHUB_REF_SLUG }}
-          overwrite: true
-          asset_name: snfm-$tag-macos-arm64.zip
-          file: snfm-macos-arm64-release.zip
+          asset_name: snfm-$tag-macos-universal.zip
+          file: snfm-macos-universal-release.zip
