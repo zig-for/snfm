@@ -103,6 +103,7 @@ jobs:
             out/build/${{ matrix.config.preset }}/snfm_config_example.yaml
 
   sign:
+    if: github.event_name == 'release' || github.head_ref == 'refs/heads/main'
     runs-on: macos-latest
     needs: build
     steps:
@@ -161,7 +162,7 @@ jobs:
   release:
     if: github.event_name == 'release'
     runs-on: ubuntu-latest
-    needs: build
+    needs: sign
     steps:
       - name: Inject slug/short variables
         uses: rlespinasse/github-slug-action@v3.x
