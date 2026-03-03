@@ -9,6 +9,7 @@ on:
     types: [ published ]
 permissions:
   packages: write
+  contents: write
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   USERNAME: ${{ github.repository_owner }}
