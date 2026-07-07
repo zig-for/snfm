@@ -26,7 +26,7 @@ inline wxIcon GetSystemIcon(SystemIcon index)
     wxIcon icon;
 
     ::ExtractIconEx(L"shell32.dll", (int)index, NULL, &hicon, 1);
-    icon.SetHandle(hicon);
+    icon.CreateFromHICON(hicon);
 
     return icon;
 #else
