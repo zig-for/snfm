@@ -120,20 +120,21 @@ FileManagerFrame::FileManagerFrame(const wxString& title, const wxPoint& pos, co
 
     wxBitmap folder = wxArtProvider::GetBitmap(wxART_FOLDER);
 
-    wxImageList* icons = new wxImageList(folder.GetWidth(), folder.GetHeight(), false, 4);
-    
+    wxVector<wxBitmapBundle> icons;
+
 #if _WIN32
-    icons->Add(GetSystemIcon(SystemIcon::FOLDER));
-    icons->Add(GetSystemIcon(SystemIcon::OPEN_FOLDER));
+    icons.push_back(GetSystemIcon(SystemIcon::FOLDER));
+    icons.push_back(GetSystemIcon(SystemIcon::OPEN_FOLDER));
 #else
-    icons->Add(folder);
-    icons->Add(wxArtProvider::GetBitmap(wxART_FOLDER_OPEN));
+    icons.push_back(folder);
+    icons.push_back(wxArtProvider::GetBitmap(wxART_FOLDER_OPEN));
 #endif
-    icons->Add(wxArtProvider::GetBitmap(wxART_NORMAL_FILE));
+    icons.push_back(wxArtProvider::GetBitmap(wxART_NORMAL_FILE));
+    
     wxBitmap snes_icon = wxBitmap(snes_xpm);
     wxBitmap::Rescale(snes_icon, folder.GetSize());
-    icons->Add(snes_icon);
-    treeCtrl_->SetImageList(icons);
+    icons.push_back(snes_icon);
+    treeCtrl_->SetImages(icons);
 
 
     bigBox->Layout();
