@@ -148,21 +148,17 @@ jobs:
         run: |
           cp macos-arm64/snfm_user_manual.md out
           cp macos-arm64/snfm_config_example.yaml out
+      - name: Archive build
+        uses: actions/upload-artifact@v5
+        with:
+          name: snfm-macos-universal-release
+          path: out/
       - name: notarize macOS build
         run: xcrun notarytool submit --wait
               --apple-id ${{ secrets.APPLE_ID }}
               --team-id ${{ secrets.APPLE_DEVELOPER_TEAM_ID }}
               --password ${{ secrets.APP_SPECIFIC_PASS }}
               snfm-apple.zip
-      - name: staple binaries
-        run: |
-          xcrun stapler staple out/manage_files
-          xcrun stapler staple out/send_file
-      - name: Archive build
-        uses: actions/upload-artifact@v5
-        with:
-          name: snfm-macos-universal-release
-          path: out/
 
   release:
     if: github.event_name == 'release'
