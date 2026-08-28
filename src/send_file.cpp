@@ -1,5 +1,6 @@
 #include "snfm.h"
 #include "config.h"
+#include "shell.h"
 #include <algorithm>
 #include <filesystem>
 
@@ -38,11 +39,14 @@ int main(int argc, char* argv[])
 
     std::string device_directory = config.default_rom_directory;
     std::string destination_rom_name = rom_path.filename().string();
+    std::string rule_name;
+    std::string destination_name;
 
     auto maybe_rule = config.FindRuleForRom(rom_path.filename().string());
     if (maybe_rule)
     {
         auto rule = maybe_rule->get();
+        rule_name = rule.name;
         if (!rule.destinations.empty())
         {
             RomDestination& destination = rule.destinations[0];
@@ -80,7 +84,7 @@ int main(int argc, char* argv[])
                         std::cout << "Not a number." << std::endl;
                         continue;
                     }
-                    if (pick < 0 || pick > rule.destinations.size())
+                    if (pick < 0 || pick >= static_cast<int>(rule.destinations.size()))
                     {
                         std::cout << "Choice must be between 0 and " << std::to_string(rule.destinations.size() - 1) << std::endl;
                         continue;
@@ -91,6 +95,7 @@ int main(int argc, char* argv[])
 
             }
             std::cout << "Using " << destination.config_name << std::endl;
+            destination_name = destination.config_name;
             device_directory = destination.path;
             if (!destination.rom_name.empty()) {
                 destination_rom_name = destination.rom_name;
@@ -131,6 +136,19 @@ int main(int argc, char* argv[])
         return 1;
     }
     sni.bootFile(*uri, *put_path);
+
+    if (!config.post_upload_script.empty())
+    {
+        RunPostUploadScript(config.post_upload_script, {
+            {"rule_name", rule_name},
+            {"destination_name", destination_name},
+            {"destination_path", device_directory},
+            {"destination_rom_name", destination_rom_name},
+            {"destination_file", put_path->generic_string()},
+            {"source_path", rom_path.string()},
+            {"source_name", rom_path.filename().string()},
+            });
+    }
 
     return 0;
 }

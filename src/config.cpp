@@ -54,6 +54,10 @@ Config LoadConfig(const std::filesystem::path& path)
     if (default_dir) {
         config.default_rom_directory = default_dir.as<std::string>();
     }
+    auto post_upload_script = y["post_upload_script"];
+    if (post_upload_script) {
+        config.post_upload_script = post_upload_script.as<std::string>();
+    }
     auto r = y["rom_destination_rules"];
 
     for (auto rule_yaml : y["rom_destination_rules"]) {

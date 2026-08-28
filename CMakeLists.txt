@@ -102,6 +102,7 @@ if(WIN32)
 endif(WIN32)
 add_executable(send_file 
     "src/send_file.cpp" 
+    "src/shell.cpp"
     "src/snfm.cpp"
     "src/config.cpp")
 target_link_libraries(send_file PRIVATE snfm_common config)

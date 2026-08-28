@@ -19,6 +19,7 @@ struct RomDestinationRule
 struct Config
 {
     std::string default_rom_directory = ".sni";
+    std::string post_upload_script;
     std::vector<RomDestinationRule> rom_destination_rules;
 
     std::optional<std::reference_wrapper<const RomDestinationRule>> FindRuleForRom(const std::string& rom_name);
