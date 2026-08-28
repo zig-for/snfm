@@ -2,7 +2,6 @@
 #include <optional>
 #include <vector>
 #include <string>
-#include <utility>
 #include <yaml-cpp/yaml.h>
 
 struct RomDestination
@@ -27,11 +26,6 @@ struct Config
 };
 
 Config LoadConfig(const std::filesystem::path& path);
-
-// Replaces every "{placeholder}" in template_string with the matching value from
-// variables.  Placeholders with no matching variable are left untouched.
-std::string ExpandTemplate(const std::string& template_string,
-    const std::vector<std::pair<std::string, std::string>>& variables);
 
 
 std::optional<std::filesystem::path> FindExistingConfigFile(const std::filesystem::path& pwd);

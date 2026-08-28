@@ -1,7 +1,6 @@
 #include <config.h>
 #include <iostream>
 #include <string_view>
-#include <algorithm>
 
 #ifdef _WIN32
 #include <shlwapi.h>
@@ -42,45 +41,6 @@ std::vector<std::string> StringSplit(const std::string& s, const std::string& de
 
     res.push_back(s.substr(pos_start));
     return res;
-}
-
-std::string ExpandTemplate(const std::string& template_string,
-    const std::vector<std::pair<std::string, std::string>>& variables)
-{
-    std::string result;
-    size_t pos = 0;
-    while (pos < template_string.size())
-    {
-        const size_t open = template_string.find('{', pos);
-        if (open == std::string::npos)
-        {
-            result.append(template_string, pos, std::string::npos);
-            break;
-        }
-        const size_t close = template_string.find('}', open);
-        if (close == std::string::npos)
-        {
-            result.append(template_string, pos, std::string::npos);
-            break;
-        }
-        result.append(template_string, pos, open - pos);
-
-        const std::string name = template_string.substr(open + 1, close - open - 1);
-        auto variable = std::find_if(variables.begin(), variables.end(),
-            [&name](const auto& v) { return v.first == name; });
-        if (variable != variables.end())
-        {
-            result.append(variable->second);
-        }
-        else
-        {
-            // Unknown placeholder - leave it alone so it's obvious what went wrong.
-            std::cout << "Unknown template variable {" << name << "}" << std::endl;
-            result.append(template_string, open, close - open + 1);
-        }
-        pos = close + 1;
-    }
-    return result;
 }
 
 Config LoadConfig(const std::filesystem::path& path)
