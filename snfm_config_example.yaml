@@ -17,6 +17,22 @@
 ### Default is .sni - directories that start with "." are hidden in the FXPAKPRO UI
 # default_rom_directory: ".sni"
 
+### (optional) a command to run once the ROM has been sent to the device and booted.
+### Handy for things like writing the MSU pack you picked out to a file for a stream overlay.
+### These variables are substituted in before the command is run:
+###   {rule_name}            - the rule that matched, e.g. "alttpr" (empty if nothing matched)
+###   {destination_name}     - the destination you picked, e.g. "WildArms2" (empty if nothing matched)
+###   {destination_path}     - the directory on the device, e.g. "/ROMs/_alttpr/_msu1/wa2"
+###   {destination_rom_name} - the ROM's name on the device, e.g. "alttp_msu.sfc"
+###   {destination_file}     - the full path on the device, e.g. "/ROMs/_alttpr/_msu1/wa2/alttp_msu.sfc"
+###   {source_path}          - the full path of the ROM on your computer
+###   {source_name}          - the file name of the ROM on your computer
+### The command is run by your shell (cmd.exe on Windows), so quote anything that might
+### contain spaces.  Windows example:
+# post_upload_script: 'echo {destination_name}> "%USERPROFILE%\msu.txt"'
+### ...and the same thing on unix:
+# post_upload_script: 'echo "{destination_name}" > "$HOME/msu.txt"'
+
 ### a set of rules to use to put certain ROMs in certain locations, such as your randomizer ROMs, useful for MSU1 users
 rom_destination_rules:
   # Unique name for your rule
