@@ -90,7 +90,7 @@ PROTOBUF_GENERATE_GRPC_CPP(PROTO_GRPC_SRCS PROTO_GRPC_HDRS sni/protos/sni/sni.pr
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR} include icons %)
 
 add_library(snfm_common ${PROTO_SRCS} ${PROTO_HDRS} ${PROTO_GRPC_SRCS} ${PROTO_GRPC_HDRS})
-target_link_libraries(snfm_common protobuf::libprotobuf gRPC::grpc++_unsecure)
+target_link_libraries(snfm_common protobuf::libprotoc protobuf::libprotobuf gRPC::grpc++_unsecure)
 if(WIN32)
   target_compile_definitions(snfm_common PUBLIC NOMINMAX)
 endif()
