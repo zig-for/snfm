@@ -31,8 +31,7 @@ std::string EscapeForShell(const std::string& value)
     std::string escaped;
     for (const char c : value)
     {
-        if (c == '"' || c == '' || c == '
-')
+        if (c == '"' || c == '\r' || c == '\n')
         {
             continue;
         }
@@ -49,16 +48,16 @@ std::string EscapeForShell(const std::string& value)
     std::string escaped = "'";
     for (const char c : value)
     {
-        if (c == ''')
+        if (c == '\'')
         {
-            escaped += "'\''";
+            escaped += "'\\''";
         }
         else
         {
             escaped.push_back(c);
         }
     }
-    escaped.push_back(''');
+    escaped.push_back('\'');
     return escaped;
 #endif
 }

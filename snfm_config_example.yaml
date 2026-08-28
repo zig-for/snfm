@@ -27,11 +27,15 @@
 ###   {destination_file}     - the full path on the device, e.g. "/ROMs/_alttpr/_msu1/wa2/alttp_msu.sfc"
 ###   {source_path}          - the full path of the ROM on your computer
 ###   {source_name}          - the file name of the ROM on your computer
-### The command is run by your shell (cmd.exe on Windows), so quote anything that might
-### contain spaces.  Windows example:
-# post_upload_script: 'echo {destination_name}> "%USERPROFILE%\msu.txt"'
+### The command is run by your shell (cmd.exe on Windows).  The values are escaped for
+### you, so leave the placeholders unquoted - whatever a ROM name or a destination
+### happens to contain is then passed along as plain text instead of being run as part
+### of the command.  Quote the parts of the command you wrote yourself, as usual.
+### Windows example - the redirect goes first so that a destination name ending in a
+### digit (like "WildArms2") isn't read by cmd.exe as a stream number:
+# post_upload_script: '> "%USERPROFILE%\msu.txt" echo {destination_name}'
 ### ...and the same thing on unix:
-# post_upload_script: 'echo "{destination_name}" > "$HOME/msu.txt"'
+# post_upload_script: 'echo {destination_name} > "$HOME/msu.txt"'
 
 ### a set of rules to use to put certain ROMs in certain locations, such as your randomizer ROMs, useful for MSU1 users
 rom_destination_rules:
